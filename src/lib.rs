@@ -6,6 +6,16 @@ pub enum Toggle {
     Off,
 }
 
+impl ToString for Toggle {
+    fn to_string(&self) -> String {
+        match self {
+            Toggle::On => String::from("on"),
+            Toggle::Off => String::from("off"),
+        }
+    }
+    // add code here
+}
+
 #[derive(Debug)]
 pub struct MotorStatus {
     brush_rpm: i32,
@@ -107,7 +117,7 @@ impl NeatoRobot for DSeries {
     }
 
     fn set_testmode(&mut self, _value: Toggle){
-        self.serial_port.write_all(b"testmode on");
+        write!(self.serial_port, "testmode {}", _value.to_string());
     }
 
     fn set_ldsrotation(&mut self, _value: Toggle) {
