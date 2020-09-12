@@ -105,7 +105,7 @@ pub trait NeatoRobot {
 }
 
 pub struct DSeries<'a> {
-    serial_port: Box<dyn SerialPort + 'a>,
+    serial_port: &'a dyn SerialPort,
     motor_status: MotorStatus,
     analog_sensor_status: AnalogSensorStatus,
     digital_sensor_status: DigitalSensorStatus,
@@ -136,7 +136,8 @@ impl NeatoRobot for DSeries <'_> {
     }
 
     fn get_scan_ranges(&mut self) -> Result<Vec<f32>, std::io::Error> {
-        let f = BufReader::new(*self.serial_port);
+        let reader = self.serial_port.by_ref();
+        let f = BufReader::new(&mut reader);
 
         // for line in f.lines() {
         //     let
