@@ -3,8 +3,7 @@ pub enum Toggle {
     Off,
 }
 
-pub struct MotorStatus
-{
+pub struct MotorStatus {
     brush_rpm: i32,
     brush_ma: i32,
     vacuum_rpm: i32,
@@ -84,4 +83,11 @@ pub trait NeatoRobot {
     fn get_charger(&self) -> ChargerStatus;
 
     fn set_backlight(&self, value: Toggle);
+}
+
+pub struct DSeries {
+    motorStatus: MotorStatus,
+    analogSensorStatus: AnalogSensorStatus,
+    digitalSensorStatus: DigitalSensorStatus,
+    chargerStatus: ChargerStatus,
 }
