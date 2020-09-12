@@ -1,3 +1,5 @@
+use serialport::posix::TTYPort;
+
 #[derive(Debug)]
 pub enum Toggle {
     On,
@@ -92,8 +94,57 @@ pub trait NeatoRobot {
 
 #[derive(Debug)]
 pub struct DSeries {
+    serial_port: TTYPort,
     motor_status: MotorStatus,
     analog_sensor_status: AnalogSensorStatus,
     digital_sensor_status: DigitalSensorStatus,
     charger_status: ChargerStatus,
+}
+
+
+impl NeatoRobot for DSeries {
+    fn exit(&self) {
+        self.set_ldsrotation(Toggle::Off);
+        self.set_testmode(Toggle::Off);
+    }
+
+    fn set_testmode(&self, value: Toggle) {
+        todo!()
+    }
+
+    fn set_ldsrotation(&self, value: Toggle) {
+        todo!()
+    }
+
+    fn request_scan(&self) {
+        todo!()
+    }
+
+    fn get_scan_ranges(&self) -> Vec<f32> {
+        todo!()
+    }
+
+    fn set_motors(&self, left_distance: i32, right_distance: i32, speed: i32) {
+        todo!()
+    }
+
+    fn get_motors(&self) -> MotorStatus {
+        todo!()
+    }
+
+    fn get_analog_sensors(&self) -> AnalogSensorStatus {
+        todo!()
+    }
+
+    fn get_digital_sensors(&self) -> DigitalSensorStatus {
+        todo!()
+    }
+
+    fn get_charger(&self) -> ChargerStatus {
+        todo!()
+    }
+
+    fn set_backlight(&self, value: Toggle) {
+        todo!()
+    }
 }
