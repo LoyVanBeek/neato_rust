@@ -75,21 +75,21 @@ pub struct ChargerStatus {
 }
 
 pub trait NeatoRobot {
-    fn exit(&self);
-    fn set_testmode(&self, value: Toggle);
-    fn set_ldsrotation(&self, value: Toggle);
+    fn exit(&mut self);
+    fn set_testmode(&mut self, value: Toggle);
+    fn set_ldsrotation(&mut self, value: Toggle);
 
     fn request_scan(&self);
     fn get_scan_ranges(&self) -> Vec<f32>;
 
-    fn set_motors(&self, left_distance: i32, right_distance: i32, speed: i32);
+    fn set_motors(&mut self, left_distance: i32, right_distance: i32, speed: i32);
     fn get_motors(&self) -> MotorStatus;
 
     fn get_analog_sensors(&self) -> AnalogSensorStatus;
     fn get_digital_sensors(&self) -> DigitalSensorStatus;
     fn get_charger(&self) -> ChargerStatus;
 
-    fn set_backlight(&self, value: Toggle);
+    fn set_backlight(&mut self, value: Toggle);
 }
 
 pub struct DSeries {
@@ -101,16 +101,16 @@ pub struct DSeries {
 }
 
 impl NeatoRobot for DSeries {
-    fn exit(&self) {
+    fn exit(&mut self) {
         self.set_ldsrotation(Toggle::Off);
         self.set_testmode(Toggle::Off);
     }
 
-    fn set_testmode(&self, value: Toggle) {
-        todo!()
+    fn set_testmode(&mut self, _value: Toggle){
+        self.serial_port.write_all(b"testmode on");
     }
 
-    fn set_ldsrotation(&self, value: Toggle) {
+    fn set_ldsrotation(&mut self, _value: Toggle) {
         todo!()
     }
 
@@ -122,7 +122,7 @@ impl NeatoRobot for DSeries {
         todo!()
     }
 
-    fn set_motors(&self, left_distance: i32, right_distance: i32, speed: i32) {
+    fn set_motors(&mut self, _left_distance: i32, _right_distance: i32, _speed: i32) {
         todo!()
     }
 
@@ -142,7 +142,7 @@ impl NeatoRobot for DSeries {
         todo!()
     }
 
-    fn set_backlight(&self, value: Toggle) {
+    fn set_backlight(&mut self, _value: Toggle) {
         todo!()
     }
 }
