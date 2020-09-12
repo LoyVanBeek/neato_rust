@@ -127,8 +127,10 @@ impl NeatoRobot for DSeries {
         Ok(())
     }
 
-    fn request_scan(&self) -> std::io::Result<()> {
-        todo!()
+    fn request_scan(&mut self) -> std::io::Result<()> {
+        self.serial_port.flush()?;
+        write!(self.serial_port, "getldsscan\n")?;
+        Ok(())
     }
 
     fn get_scan_ranges(&self) -> Result<Vec<f32>, std::io::Error> {
