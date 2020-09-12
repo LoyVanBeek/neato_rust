@@ -18,7 +18,7 @@ impl ToString for Toggle {
     // add code here
 }
 
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub struct MotorStatus {
     brush_rpm: i32,
     brush_ma: i32,
@@ -35,7 +35,7 @@ pub struct MotorStatus {
     side_bruch_ma: i32,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub struct AnalogSensorStatus {
     battery_voltage: f32,
     battery_current: f32,
@@ -53,7 +53,7 @@ pub struct AnalogSensorStatus {
     drop_sensor_right: f32,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub struct DigitalSensorStatus {
     sensor_dc_jack_is_in: bool,
     sensor_dustbin_is_in: bool,
@@ -67,7 +67,7 @@ pub struct DigitalSensorStatus {
     right_ldsbit: bool,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub struct ChargerStatus {
     fuel_percent: i32,
     battery_over_tmp: i32,
@@ -104,12 +104,25 @@ pub trait NeatoRobot {
     fn set_backlight(&mut self, value: Toggle) -> std::io::Result<()>;
 }
 
+
 pub struct DSeries<'a> {
     serial_port: Box<dyn SerialPort + 'a>,
     motor_status: MotorStatus,
     analog_sensor_status: AnalogSensorStatus,
     digital_sensor_status: DigitalSensorStatus,
     charger_status: ChargerStatus,
+}
+
+impl DSeries<'_> {
+    pub fn new(serial_port: Box<dyn SerialPort>) -> Self {
+        Self {
+            serial_port: serial_port,
+            motor_status: MotorStatus{..Default::default()},
+            analog_sensor_status: AnalogSensorStatus{..Default::default()},
+            digital_sensor_status: DigitalSensorStatus{..Default::default()},
+            charger_status: ChargerStatus{..Default::default()},
+        }
+    }
 }
 
 impl NeatoRobot for DSeries <'_> {
