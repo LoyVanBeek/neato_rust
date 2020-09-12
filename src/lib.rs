@@ -89,15 +89,15 @@ pub trait NeatoRobot {
     fn set_testmode(&mut self, value: Toggle) -> std::io::Result<()>;
     fn set_ldsrotation(&mut self, value: Toggle) -> std::io::Result<()>;
 
-    fn request_scan(&self) -> std::io::Result<()>;
-    fn get_scan_ranges(&self) -> Result<Vec<f32>, std::io::Error>;
+    fn request_scan(&mut self) -> std::io::Result<()>;
+    fn get_scan_ranges(&mut self) -> Result<Vec<f32>, std::io::Error>;
 
     fn set_motors(&mut self, left_distance: i32, right_distance: i32, speed: i32) -> std::io::Result<()>;
-    fn get_motors(&self) -> Result<MotorStatus, std::io::Error>;
+    fn get_motors(&mut self) -> Result<MotorStatus, std::io::Error>;
 
-    fn get_analog_sensors(&self) -> Result<AnalogSensorStatus, std::io::Error>;
-    fn get_digital_sensors(&self) -> Result<DigitalSensorStatus, std::io::Error>;
-    fn get_charger(&self) -> Result<ChargerStatus, std::io::Error>;
+    fn get_analog_sensors(&mut self) -> Result<AnalogSensorStatus, std::io::Error>;
+    fn get_digital_sensors(&mut self) -> Result<DigitalSensorStatus, std::io::Error>;
+    fn get_charger(&mut self) -> Result<ChargerStatus, std::io::Error>;
 
     fn set_backlight(&mut self, value: Toggle) -> std::io::Result<()>;
 }
@@ -139,19 +139,19 @@ impl NeatoRobot for DSeries {
         todo!()
     }
 
-    fn get_motors(&self) -> Result<MotorStatus, std::io::Error> {
+    fn get_motors(&mut self) -> Result<MotorStatus, std::io::Error> {
         todo!()
     }
 
-    fn get_analog_sensors(&self) -> Result<AnalogSensorStatus, std::io::Error> {
+    fn get_analog_sensors(&mut self) -> Result<AnalogSensorStatus, std::io::Error> {
         todo!()
     }
 
-    fn get_digital_sensors(&self) -> Result<DigitalSensorStatus, std::io::Error> {
+    fn get_digital_sensors(&mut self) -> Result<DigitalSensorStatus, std::io::Error> {
         todo!()
     }
 
-    fn get_charger(&self) -> Result<ChargerStatus, std::io::Error> {
+    fn get_charger(&mut self) -> Result<ChargerStatus, std::io::Error> {
         todo!()
     }
 
