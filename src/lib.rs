@@ -1,8 +1,10 @@
+#[derive(Debug)]
 pub enum Toggle {
     On,
     Off,
 }
 
+#[derive(Debug)]
 pub struct MotorStatus {
     brush_rpm: i32,
     brush_ma: i32,
@@ -19,6 +21,7 @@ pub struct MotorStatus {
     side_bruch_ma: i32,
 }
 
+#[derive(Debug)]
 pub struct AnalogSensorStatus {
     battery_voltage: f32,
     battery_current: f32,
@@ -36,6 +39,7 @@ pub struct AnalogSensorStatus {
     drop_sensor_right: f32,
 }
 
+#[derive(Debug)]
 pub struct DigitalSensorStatus {
     sensor_dc_jack_is_in: bool,
     sensor_dustbin_is_in: bool,
@@ -49,6 +53,7 @@ pub struct DigitalSensorStatus {
     right_ldsbit: bool,
 }
 
+#[derive(Debug)]
 pub struct ChargerStatus {
     fuel_percent: i32,
     battery_over_tmp: i32,
@@ -85,9 +90,10 @@ pub trait NeatoRobot {
     fn set_backlight(&self, value: Toggle);
 }
 
+#[derive(Debug)]
 pub struct DSeries {
-    motorStatus: MotorStatus,
-    analogSensorStatus: AnalogSensorStatus,
-    digitalSensorStatus: DigitalSensorStatus,
-    chargerStatus: ChargerStatus,
+    motor_status: MotorStatus,
+    analog_sensor_status: AnalogSensorStatus,
+    digital_sensor_status: DigitalSensorStatus,
+    charger_status: ChargerStatus,
 }
