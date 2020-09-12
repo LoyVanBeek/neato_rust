@@ -117,13 +117,14 @@ impl NeatoRobot for DSeries {
         Ok(())
     }
 
-    fn set_testmode(&mut self, _value: Toggle) -> std::io::Result<()>{
-        write!(self.serial_port, "testmode {}", _value.to_string())?;
+    fn set_testmode(&mut self, value: Toggle) -> std::io::Result<()>{
+        write!(self.serial_port, "testmode {}", value.to_string())?;
         Ok(())
     }
 
-    fn set_ldsrotation(&mut self, _value: Toggle) -> std::io::Result<()> {
-        todo!()
+    fn set_ldsrotation(&mut self, value: Toggle) -> std::io::Result<()> {
+        write!(self.serial_port, "ldsrotation {}", value.to_string())?;
+        Ok(())
     }
 
     fn request_scan(&self) -> std::io::Result<()> {
@@ -154,7 +155,8 @@ impl NeatoRobot for DSeries {
         todo!()
     }
 
-    fn set_backlight(&mut self, _value: Toggle) -> std::io::Result<()> {
-        todo!()
+    fn set_backlight(&mut self, value: Toggle) -> std::io::Result<()> {
+        write!(self.serial_port, "setled backlight{}", value.to_string())?;
+        Ok(())
     }
 }
