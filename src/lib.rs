@@ -102,15 +102,15 @@ pub trait NeatoRobot {
     fn set_backlight(&mut self, value: Toggle) -> std::io::Result<()>;
 }
 
-pub struct DSeries {
-    serial_port: Box<dyn SerialPort>,
+pub struct DSeries<'a> {
+    serial_port: Box<dyn SerialPort + 'a>,
     motor_status: MotorStatus,
     analog_sensor_status: AnalogSensorStatus,
     digital_sensor_status: DigitalSensorStatus,
     charger_status: ChargerStatus,
 }
 
-impl NeatoRobot for DSeries {
+impl NeatoRobot for DSeries <'_> {
     fn exit(&mut self) -> std::io::Result<()>{
         self.set_ldsrotation(Toggle::Off)?;
         self.set_testmode(Toggle::Off)?;
