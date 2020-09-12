@@ -1,3 +1,5 @@
+use std::io::BufReader;
+
 use serialport::SerialPort;
 
 #[derive(Debug)]
@@ -133,8 +135,14 @@ impl NeatoRobot for DSeries <'_> {
         Ok(())
     }
 
-    fn get_scan_ranges(&self) -> Result<Vec<f32>, std::io::Error> {
-        todo!()
+    fn get_scan_ranges(&mut self) -> Result<Vec<f32>, std::io::Error> {
+        let f = BufReader::new(*self.serial_port);
+
+        // for line in f.lines() {
+        //     let
+        //     println!("{}", line.unwrap());
+        // }
+        Ok(vec![])
     }
 
     fn set_motors(&mut self, _left_distance: i32, _right_distance: i32, _speed: i32) -> std::io::Result<()> {
