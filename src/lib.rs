@@ -86,7 +86,7 @@ pub struct ChargerStatus {
 
 pub trait NeatoRobot {
     fn exit(&mut self);
-    fn set_testmode(&mut self, value: Toggle);
+    fn set_testmode(&mut self, value: Toggle) -> std::io::Result<()>;
     fn set_ldsrotation(&mut self, value: Toggle);
 
     fn request_scan(&self);
@@ -116,8 +116,9 @@ impl NeatoRobot for DSeries {
         self.set_testmode(Toggle::Off);
     }
 
-    fn set_testmode(&mut self, _value: Toggle){
-        write!(self.serial_port, "testmode {}", _value.to_string());
+    fn set_testmode(&mut self, _value: Toggle) -> std::io::Result<()>{
+        write!(self.serial_port, "testmode {}", _value.to_string())?;
+        Ok(())
     }
 
     fn set_ldsrotation(&mut self, _value: Toggle) {
