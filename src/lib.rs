@@ -85,21 +85,21 @@ pub struct ChargerStatus {
 }
 
 pub trait NeatoRobot {
-    fn exit(&mut self);
+    fn exit(&mut self) -> std::io::Result<()>;
     fn set_testmode(&mut self, value: Toggle) -> std::io::Result<()>;
-    fn set_ldsrotation(&mut self, value: Toggle);
+    fn set_ldsrotation(&mut self, value: Toggle) -> std::io::Result<()>;
 
-    fn request_scan(&self);
-    fn get_scan_ranges(&self) -> Vec<f32>;
+    fn request_scan(&self) -> std::io::Result<()>;
+    fn get_scan_ranges(&self) -> Result<Vec<f32>, std::io::Error>;
 
-    fn set_motors(&mut self, left_distance: i32, right_distance: i32, speed: i32);
-    fn get_motors(&self) -> MotorStatus;
+    fn set_motors(&mut self, left_distance: i32, right_distance: i32, speed: i32) -> std::io::Result<()>;
+    fn get_motors(&self) -> Result<MotorStatus, std::io::Error>;
 
-    fn get_analog_sensors(&self) -> AnalogSensorStatus;
-    fn get_digital_sensors(&self) -> DigitalSensorStatus;
-    fn get_charger(&self) -> ChargerStatus;
+    fn get_analog_sensors(&self) -> Result<AnalogSensorStatus, std::io::Error>;
+    fn get_digital_sensors(&self) -> Result<DigitalSensorStatus, std::io::Error>;
+    fn get_charger(&self) -> Result<ChargerStatus, std::io::Error>;
 
-    fn set_backlight(&mut self, value: Toggle);
+    fn set_backlight(&mut self, value: Toggle) -> std::io::Result<()>;
 }
 
 pub struct DSeries {
@@ -111,9 +111,10 @@ pub struct DSeries {
 }
 
 impl NeatoRobot for DSeries {
-    fn exit(&mut self) {
-        self.set_ldsrotation(Toggle::Off);
-        self.set_testmode(Toggle::Off);
+    fn exit(&mut self) -> std::io::Result<()>{
+        self.set_ldsrotation(Toggle::Off)?;
+        self.set_testmode(Toggle::Off)?;
+        Ok(())
     }
 
     fn set_testmode(&mut self, _value: Toggle) -> std::io::Result<()>{
@@ -121,39 +122,39 @@ impl NeatoRobot for DSeries {
         Ok(())
     }
 
-    fn set_ldsrotation(&mut self, _value: Toggle) {
+    fn set_ldsrotation(&mut self, _value: Toggle) -> std::io::Result<()> {
         todo!()
     }
 
-    fn request_scan(&self) {
+    fn request_scan(&self) -> std::io::Result<()> {
         todo!()
     }
 
-    fn get_scan_ranges(&self) -> Vec<f32> {
+    fn get_scan_ranges(&self) -> Result<Vec<f32>, std::io::Error> {
         todo!()
     }
 
-    fn set_motors(&mut self, _left_distance: i32, _right_distance: i32, _speed: i32) {
+    fn set_motors(&mut self, _left_distance: i32, _right_distance: i32, _speed: i32) -> std::io::Result<()> {
         todo!()
     }
 
-    fn get_motors(&self) -> MotorStatus {
+    fn get_motors(&self) -> Result<MotorStatus, std::io::Error> {
         todo!()
     }
 
-    fn get_analog_sensors(&self) -> AnalogSensorStatus {
+    fn get_analog_sensors(&self) -> Result<AnalogSensorStatus, std::io::Error> {
         todo!()
     }
 
-    fn get_digital_sensors(&self) -> DigitalSensorStatus {
+    fn get_digital_sensors(&self) -> Result<DigitalSensorStatus, std::io::Error> {
         todo!()
     }
 
-    fn get_charger(&self) -> ChargerStatus {
+    fn get_charger(&self) -> Result<ChargerStatus, std::io::Error> {
         todo!()
     }
 
-    fn set_backlight(&mut self, _value: Toggle) {
+    fn set_backlight(&mut self, _value: Toggle) -> std::io::Result<()> {
         todo!()
     }
 }
