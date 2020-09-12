@@ -1,4 +1,4 @@
-use serialport::{posix::TTYPort, SerialPort};
+use serialport::SerialPort;
 
 #[derive(Debug)]
 pub enum Toggle {
@@ -91,15 +91,6 @@ pub trait NeatoRobot {
 
     fn set_backlight(&self, value: Toggle);
 }
-
-// impl std::fmt::Debug for dyn SerialPort {
-//     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-//         match self.name() {
-//             Some(x) => write!(f, "{}", x),
-//             None    => write!(f, "None"),
-//         }
-//     }
-// }
 
 pub struct DSeries {
     serial_port: Box<dyn SerialPort>,
