@@ -138,6 +138,7 @@ impl NeatoRobot for DSeries <'_> {
     fn get_scan_ranges(&mut self) -> Result<Vec<f32>, std::io::Error> {
         let mut buffer = String::new();
         self.serial_port.read_to_string(&mut buffer)?;
+        println!("{}", buffer);
         Ok(vec![])
     }
 
