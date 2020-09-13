@@ -133,24 +133,35 @@ impl NeatoRobot for DSeries <'_> {
     }
 
     fn set_testmode(&mut self, value: Toggle) -> std::io::Result<()>{
-        write!(self.serial_port, "testmode {}", value.to_string())?;
+        println!("Setting testmode");
+        writeln!(self.serial_port, "testmode {}", value.to_string())?;
+        self.serial_port.flush()?;
+        println!("Set testmode");
         Ok(())
     }
 
     fn set_ldsrotation(&mut self, value: Toggle) -> std::io::Result<()> {
-        write!(self.serial_port, "ldsrotation {}", value.to_string())?;
+        println!("Setting ldsrotation");
+        writeln!(self.serial_port, "setldsrotation {}", value.to_string())?;
+        self.serial_port.flush()?;
+        println!("Set ldsrotation");
         Ok(())
     }
 
     fn request_scan(&mut self) -> std::io::Result<()> {
+        println!("Requesting scan");
         self.serial_port.flush()?;
-        write!(self.serial_port, "getldsscan\n")?;
+        println!("Port flushed");
+        writeln!(self.serial_port, "getldsscan\n")?;
+        println!("Requested scan");
         Ok(())
     }
 
     fn get_scan_ranges(&mut self) -> Result<Vec<f32>, std::io::Error> {
         let mut buffer = String::new();
+        println!("Reading serial_port for scan_ranges");
         self.serial_port.read_to_string(&mut buffer)?;
+        println!("Got scan_ranges");
         println!("{}", buffer);
         Ok(vec![])
     }
@@ -176,7 +187,7 @@ impl NeatoRobot for DSeries <'_> {
     }
 
     fn set_backlight(&mut self, value: Toggle) -> std::io::Result<()> {
-        write!(self.serial_port, "setled backlight{}", value.to_string())?;
+        writeln!(self.serial_port, "setled backlight{}", value.to_string())?;
         Ok(())
     }
 }
