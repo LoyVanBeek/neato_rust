@@ -1,6 +1,7 @@
-use std::io::BufReader;
+use std::{io::BufReader, thread, time::Duration, io};
 
 use serialport::SerialPort;
+use io::Write;
 
 #[derive(Debug)]
 pub enum Toggle {

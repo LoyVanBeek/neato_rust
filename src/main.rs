@@ -1,4 +1,4 @@
-use std::{time, thread, env};
+use std::{time, thread, env, io::stdin, io::Read};
 
 use neato_driver::{DSeries, NeatoRobot, Toggle};
 use serialport::SerialPortSettings;
@@ -28,16 +28,27 @@ fn main() {
     robot.set_testmode(Toggle::On).expect("Failed to enable testmode");
     robot.set_ldsrotation(Toggle::On).expect("Failed to enable LDS rotation");
     robot.request_scan().expect("Failed to request a scan");
+
+    println!("Press enter to continue");
+    let mut input = String::new();
+    match stdin().read_line(&mut input) {
+        Ok(n) => {
+            println!("{} bytes read", n);
+            println!("{}", input);
+        }
+        Err(error) => println!("error: {}", error),
+    }
+
     match robot.get_scan_ranges()
     {
         Ok(ranges) => println!("{}", ranges.len()),
         Err(err) => {
             eprintln!("Could not get_scan_ranges: {:?}", err);
-            robot.exit().expect("Failed to exit robot while handling err");
+            // robot.exit().expect("Failed to exit robot while handling err");
         }
     }
-    let ten_millis = time::Duration::from_secs(10);
-    thread::sleep(ten_millis);
+    let wait = time::Duration::from_secs(5);
+    thread::sleep(wait);
 
     robot.exit().expect("Failed to exit robot");
 }
