@@ -150,9 +150,9 @@ impl NeatoRobot for DSeries <'_> {
 
     fn request_scan(&mut self) -> std::io::Result<()> {
         println!("Requesting scan");
-        self.serial_port.flush()?;
-        println!("Port flushed");
-        writeln!(self.serial_port, "getldsscan\n")?;
+        // self.serial_port.flush()?;
+        // println!("Port flushed");
+        writeln!(self.serial_port, "getldsscan")?;
         println!("Requested scan");
         Ok(())
     }

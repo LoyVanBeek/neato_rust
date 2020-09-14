@@ -1,4 +1,4 @@
-use std::{time, thread, env};
+use std::{time, thread, env, process};
 
 use neato_driver::{DSeries, NeatoRobot, Toggle};
 use serialport::SerialPortSettings;
@@ -25,8 +25,15 @@ fn main() {
 
     robot.set_testmode(Toggle::On).unwrap();
     robot.set_ldsrotation(Toggle::On).unwrap();
-    // robot.request_scan().unwrap();
-    // robot.get_scan_ranges().unwrap();
+    robot.request_scan().unwrap();
+    match robot.get_scan_ranges()
+    {
+        Ok(ranges) => println!("{}", ranges.len()),
+        Err(err) => {
+            eprintln!("Could not get_scan_ranges: {:?}", err);
+            robot.exit().unwrap();
+        }
+    }
     let ten_millis = time::Duration::from_secs(10);
     thread::sleep(ten_millis);
 
