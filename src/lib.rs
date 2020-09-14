@@ -161,6 +161,8 @@ impl NeatoRobot for DSeries <'_> {
 
     fn get_scan_ranges(&mut self) -> Result<Vec<f32>, std::io::Error> {
         let mut buffer = String::new();
+        log::debug!("Wait before reading scan");
+        thread::sleep(Duration::from_millis(1000));
         log::debug!("Reading serial_port for scan_ranges");
         self.serial_port.read_to_string(&mut buffer)?;
         log::debug!("Got scan_ranges");
