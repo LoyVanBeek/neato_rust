@@ -1,7 +1,7 @@
 use std::{time, thread, env, io::stdin, io::Read};
 
 use neato_driver::{DSeries, NeatoRobot, Toggle};
-use serialport::SerialPortSettings;
+use serialport::{SerialPortSettings, FlowControl};
 
 fn main() {
     let args: Vec<String> = env::args().collect();
@@ -14,6 +14,8 @@ fn main() {
 
     let s = SerialPortSettings {
         baud_rate: 115200,
+        flow_control: FlowControl::None,
+        timeout: time::Duration::from_secs(1),
         ..Default::default()
     };
     
@@ -28,16 +30,6 @@ fn main() {
     robot.set_testmode(Toggle::On).expect("Failed to enable testmode");
     robot.set_ldsrotation(Toggle::On).expect("Failed to enable LDS rotation");
     robot.request_scan().expect("Failed to request a scan");
-
-    println!("Press enter to continue");
-    let mut input = String::new();
-    match stdin().read_line(&mut input) {
-        Ok(n) => {
-            println!("{} bytes read", n);
-            println!("{}", input);
-        }
-        Err(error) => println!("error: {}", error),
-    }
 
     match robot.get_scan_ranges()
     {

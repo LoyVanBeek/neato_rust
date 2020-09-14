@@ -145,7 +145,7 @@ impl NeatoRobot for DSeries <'_> {
     fn set_ldsrotation(&mut self, value: Toggle) -> std::io::Result<()> {
         log::debug!("Setting ldsrotation");
         writeln!(self.serial_port, "setldsrotation {}", value.to_string())?;
-        self.serial_port.flush()?;
+        // self.serial_port.flush()?;
         log::debug!("Set ldsrotation");
         Ok(())
     }
@@ -160,13 +160,46 @@ impl NeatoRobot for DSeries <'_> {
     }
 
     fn get_scan_ranges(&mut self) -> Result<Vec<f32>, std::io::Error> {
-        let mut buffer = String::new();
-        log::debug!("Wait before reading scan");
-        thread::sleep(Duration::from_millis(1000));
+        // let mut buffer = String::new();
         log::debug!("Reading serial_port for scan_ranges");
-        self.serial_port.read_to_string(&mut buffer)?;
+        // self.serial_port.read_to_string(&mut buffer)?;
+
+        let mut buffer = [0; 1];
+        let n = self.serial_port.read(&mut buffer)?;
+        println!("buffer: {}, {:?}", n, &buffer[..n]);
+
+
+        let mut buffer2 = [0; 1];
+        let n2 = self.serial_port.read(&mut buffer2)?;
+        println!("buffer2: {}, {:?}", n2, &buffer2[..n2]);
+
+
+        let mut buffer3 = [0; 1];
+        let n3 = self.serial_port.read(&mut buffer3)?;
+        println!("buffer3: {}, {:?}", n3, &buffer3[..n3]);
+
+
+        let mut buffer4 = [0; 1];
+        let n4 = self.serial_port.read(&mut buffer4)?;
+        println!("buffer4: {}, {:?}", n4, &buffer4[..n4]);
+
+
+        let mut buffer5 = [0; 1];
+        let n5 = self.serial_port.read(&mut buffer5)?;
+        println!("buffer5: {}, {:?}", n5, &buffer5[..n5]);
+
+        let s = match String::from_utf8([buffer, buffer2, buffer3, buffer4, buffer5].concat()) {
+            Ok(v) => println!("{}", v),
+            Err(e) => panic!("Invalid UTF-8 sequence: {}", e),
+        };
+
+        // let mut buffer3 = Vec::new();
+
+        // // read the whole file
+        // self.serial_port.read_to_end(&mut buffer3)?;
+
         log::debug!("Got scan_ranges");
-        log::debug!("{}", buffer);
+        // log::debug!("{}", buffer);
         Ok(vec![])
     }
 
