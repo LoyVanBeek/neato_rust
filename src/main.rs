@@ -1,4 +1,4 @@
-use std::{time, thread, env, process};
+use std::{time, thread, env};
 
 use neato_driver::{DSeries, NeatoRobot, Toggle};
 use serialport::SerialPortSettings;
@@ -7,6 +7,8 @@ fn main() {
     let args: Vec<String> = env::args().collect();
     println!("{:?}", args);
     let port = &args[1];
+
+    env_logger::init();
     
     println!("Hello robot on port {}!", port);
 

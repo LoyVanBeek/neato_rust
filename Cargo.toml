@@ -8,3 +8,5 @@ edition = "2018"
 
 [dependencies]
 serialport = "3.3.0"
+log = "0.4.11"
+env_logger = "0.7.1"
