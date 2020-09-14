@@ -178,6 +178,8 @@ impl NeatoRobot for DSeries <'_> {
 
         self.serial_port.flush()?;
         log::debug!("Set ldsrotation");
+        thread::sleep(time::Duration::from_millis(5000));
+        log::info!("Wait for laser turret to spin up to speed");
         Ok(())
     }
 
@@ -202,7 +204,7 @@ impl NeatoRobot for DSeries <'_> {
 
         for _n in 1..100 {
             let mut buffer = [0; 1];
-            let n = self.serial_port.read(&mut buffer)?;
+            let _n = self.serial_port.read(&mut buffer)?;
             // println!("buffer: {}, {:?}", n, &buffer[..n]);
             let ch = buffer[0];
             if ch as char == '\n' {

@@ -28,13 +28,12 @@ fn main() {
     println!("Create robot");
 
     robot.set_testmode(Toggle::On).expect("Failed to enable testmode");
-    thread::sleep(time::Duration::from_secs(1));
+    thread::sleep(time::Duration::from_millis(500));
     
     robot.set_ldsrotation(Toggle::On).expect("Failed to enable LDS rotation");
-    thread::sleep(time::Duration::from_secs(1));
     
     robot.request_scan().expect("Failed to request a scan");
-    thread::sleep(time::Duration::from_secs(1));
+    // thread::sleep(time::Duration::from_millis(500));
 
     match robot.get_scan_ranges()
     {
