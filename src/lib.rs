@@ -129,6 +129,7 @@ impl NeatoRobot for DSeries <'_> {
     fn exit(&mut self) -> std::io::Result<()>{
         self.set_ldsrotation(Toggle::Off)?;
         self.set_testmode(Toggle::Off)?;
+        self.serial_port.flush()?;
         Ok(())
     }
 
