@@ -1,7 +1,7 @@
 use std::{io::BufReader, thread, time::Duration, io};
 
 use serialport::SerialPort;
-use io::Write;
+use io::{Write};
 
 #[derive(Debug)]
 pub enum Toggle {
@@ -130,14 +130,15 @@ impl NeatoRobot for DSeries <'_> {
     fn exit(&mut self) -> std::io::Result<()>{
         self.set_ldsrotation(Toggle::Off)?;
         self.set_testmode(Toggle::Off)?;
-        self.serial_port.flush()?;
+        writeln!(self.serial_port, "blabla")?;
+        // self.serial_port.flush()?;
         Ok(())
     }
 
     fn set_testmode(&mut self, value: Toggle) -> std::io::Result<()>{
         log::debug!("Setting testmode");
         writeln!(self.serial_port, "testmode {}", value.to_string())?;
-        self.serial_port.flush()?;
+        // self.serial_port.flush()?;
         log::debug!("Set testmode");
         Ok(())
     }
@@ -175,37 +176,12 @@ impl NeatoRobot for DSeries <'_> {
             longbuffer.push(ch);
         }
 
-        // let mut buffer2 = [0; 1];
-        // let n2 = self.serial_port.read(&mut buffer2)?;
-        // println!("buffer2: {}, {:?}", n2, &buffer2[..n2]);
-
-
-        // let mut buffer3 = [0; 1];
-        // let n3 = self.serial_port.read(&mut buffer3)?;
-        // println!("buffer3: {}, {:?}", n3, &buffer3[..n3]);
-
-
-        // let mut buffer4 = [0; 1];
-        // let n4 = self.serial_port.read(&mut buffer4)?;
-        // println!("buffer4: {}, {:?}", n4, &buffer4[..n4]);
-
-
-        // let mut buffer5 = [0; 1];
-        // let n5 = self.serial_port.read(&mut buffer5)?;
-        // println!("buffer5: {}, {:?}", n5, &buffer5[..n5]);
-
-        let s = match String::from_utf8(longbuffer) {
+        let _s = match String::from_utf8(longbuffer) {
             Ok(v) => println!("{}", v),
             Err(e) => panic!("Invalid UTF-8 sequence: {}", e),
         };
 
-        // let mut buffer3 = Vec::new();
-
-        // // read the whole file
-        // self.serial_port.read_to_end(&mut buffer3)?;
-
         log::debug!("Got scan_ranges");
-        // log::debug!("{}", buffer);
         Ok(vec![])
     }
 
