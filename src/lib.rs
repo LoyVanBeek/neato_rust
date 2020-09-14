@@ -1,4 +1,4 @@
-use std::{thread, io, time};
+use std::{thread, io, time, num::ParseIntError};
 
 use serialport::SerialPort;
 use io::{Write};
@@ -132,6 +132,7 @@ impl DSeries<'_> {
 pub enum GetDataError {
     Io(io::Error),
     Parse(std::string::FromUtf8Error),
+    ParseData(ParseIntError),
 }
 impl From<io::Error> for GetDataError {
     fn from(err: io::Error) -> GetDataError {
@@ -142,6 +143,12 @@ impl From<io::Error> for GetDataError {
 impl From<std::string::FromUtf8Error> for GetDataError {
     fn from(err: std::string::FromUtf8Error) -> GetDataError {
         GetDataError::Parse(err)
+    }
+}
+
+impl From<ParseIntError> for GetDataError {
+    fn from(err: ParseIntError) -> GetDataError {
+        GetDataError::ParseData(err)
     }
 }
 
@@ -219,12 +226,32 @@ impl NeatoRobot for DSeries <'_> {
 
     fn get_scan_ranges(&mut self) -> Result<Vec<f32>, GetDataError> {
         log::debug!("Reading serial_port for scan_ranges");
+
+        let mut ranges = vec![];
+
         for _n in 1..363 {  // 1 header line + 360? lines of distances for each degree + 1 trailing line
             let s = self.read_line()?;
             println!("{}", s);
-        }
+            if !s.starts_with("ROTATION") && !s.starts_with("Angle") {
+                let split = s.split(",");
+                let vec: Vec<&str> = split.collect();
+                let range_str = vec.get(1);
+                match range_str {
+                    Some(range_data) => {
+                        match range_data.parse::<i32>(){
+                            Ok(range) => ranges.push((range as f32)/1000.0),  // millimeters to meters
+                            Err(err) => {
+                                println!("Could not parse {}", s);
+                                return Err(GetDataError::ParseData(err));
+                            },
+                        };
+                    }
+                    None => println!("Could not get element from {}", s),
+                };
+            };
+        };
         log::debug!("Got scan_ranges");
-        Ok(vec![])
+        Ok(ranges)
     }
 
     fn set_motors(&mut self, _left_distance: i32, _right_distance: i32, _speed: i32) -> std::io::Result<()> {

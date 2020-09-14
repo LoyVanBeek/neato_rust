@@ -37,7 +37,7 @@ fn main() {
 
     match robot.get_scan_ranges()
     {
-        Ok(ranges) => println!("{}", ranges.len()),
+        Ok(ranges) => println!("{:?}", ranges),
         Err(err) => {
             eprintln!("Could not get_scan_ranges: {:?}", err);
             // robot.exit().expect("Failed to exit robot while handling err");
