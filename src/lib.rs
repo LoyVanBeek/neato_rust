@@ -126,6 +126,12 @@ impl DSeries<'_> {
     }
 }
 
+#[derive(Debug)]
+pub enum GetDataError {
+    Io(io::Error),
+    Parse(std::string::FromUtf8Error),
+}
+
 impl NeatoRobot for DSeries <'_> {
     fn exit(&mut self) -> std::io::Result<()>{
         self.set_ldsrotation(Toggle::Off)?;
