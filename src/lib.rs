@@ -133,6 +133,17 @@ pub enum GetDataError {
     Io(io::Error),
     Parse(std::string::FromUtf8Error),
 }
+impl From<io::Error> for GetDataError {
+    fn from(err: io::Error) -> GetDataError {
+        GetDataError::Io(err)
+    }
+}
+
+impl From<std::string::FromUtf8Error> for GetDataError {
+    fn from(err: std::string::FromUtf8Error) -> GetDataError {
+        GetDataError::Parse(err)
+    }
+}
 
 impl NeatoRobot for DSeries <'_> {
     fn exit(&mut self) -> std::io::Result<()>{
@@ -178,7 +189,7 @@ impl NeatoRobot for DSeries <'_> {
             Ok(v) => println!("{}", v),
             Err(_) => println!("Error reading back"),
         };
-        
+
         self.serial_port.flush()?;
         log::debug!("Port flushed");
 
@@ -191,7 +202,7 @@ impl NeatoRobot for DSeries <'_> {
 
         for _n in 1..100 {
             let mut buffer = [0; 1];
-            let n = self.serial_port.read(&mut buffer).map_err(GetDataError::Io)?;
+            let n = self.serial_port.read(&mut buffer)?;
             println!("buffer: {}, {:?}", n, &buffer[..n]);
             let ch = buffer[0];
             longbuffer.push(ch);
@@ -200,7 +211,7 @@ impl NeatoRobot for DSeries <'_> {
             }
         }
 
-        let s = String::from_utf8(longbuffer).map_err(GetDataError::Parse)?;
+        let s = String::from_utf8(longbuffer)?;
         return Ok(s);
     }
 
