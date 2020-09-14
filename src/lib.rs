@@ -138,7 +138,6 @@ impl NeatoRobot for DSeries <'_> {
     fn exit(&mut self) -> std::io::Result<()>{
         self.set_ldsrotation(Toggle::Off)?;
         self.set_testmode(Toggle::Off)?;
-        writeln!(self.serial_port, "blabla")?;
         // self.serial_port.flush()?;
         Ok(())
     }
@@ -146,6 +145,12 @@ impl NeatoRobot for DSeries <'_> {
     fn set_testmode(&mut self, value: Toggle) -> std::io::Result<()>{
         log::debug!("Setting testmode");
         writeln!(self.serial_port, "testmode {}", value.to_string())?;
+
+        let s = match self.read_line() {
+            Ok(v) => println!("{}", v),
+            Err(_) => println!("Error reading back"),
+        };
+
         // self.serial_port.flush()?;
         log::debug!("Set testmode");
         Ok(())
@@ -154,6 +159,12 @@ impl NeatoRobot for DSeries <'_> {
     fn set_ldsrotation(&mut self, value: Toggle) -> std::io::Result<()> {
         log::debug!("Setting ldsrotation");
         writeln!(self.serial_port, "setldsrotation {}", value.to_string())?;
+                
+        let s = match self.read_line() {
+            Ok(v) => println!("{}", v),
+            Err(_) => println!("Error reading back"),
+        };
+
         // self.serial_port.flush()?;
         log::debug!("Set ldsrotation");
         Ok(())
@@ -161,9 +172,16 @@ impl NeatoRobot for DSeries <'_> {
 
     fn request_scan(&mut self) -> std::io::Result<()> {
         log::debug!("Requesting scan");
-        // self.serial_port.flush()?;
-        // log::debug!("Port flushed");
         writeln!(self.serial_port, "getldsscan")?;
+
+        let s = match self.read_line() {
+            Ok(v) => println!("{}", v),
+            Err(_) => println!("Error reading back"),
+        };
+        
+        self.serial_port.flush()?;
+        log::debug!("Port flushed");
+
         log::debug!("Requested scan");
         Ok(())
     }
