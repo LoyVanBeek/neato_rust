@@ -164,31 +164,37 @@ impl NeatoRobot for DSeries <'_> {
         log::debug!("Reading serial_port for scan_ranges");
         // self.serial_port.read_to_string(&mut buffer)?;
 
-        let mut buffer = [0; 1];
-        let n = self.serial_port.read(&mut buffer)?;
-        println!("buffer: {}, {:?}", n, &buffer[..n]);
+
+        let mut longbuffer = vec![];
+
+        for _n in 1..12 {
+            let mut buffer = [0; 1];
+            let n = self.serial_port.read(&mut buffer)?;
+            println!("buffer: {}, {:?}", n, &buffer[..n]);
+            let ch = buffer[0];
+            longbuffer.push(ch);
+        }
+
+        // let mut buffer2 = [0; 1];
+        // let n2 = self.serial_port.read(&mut buffer2)?;
+        // println!("buffer2: {}, {:?}", n2, &buffer2[..n2]);
 
 
-        let mut buffer2 = [0; 1];
-        let n2 = self.serial_port.read(&mut buffer2)?;
-        println!("buffer2: {}, {:?}", n2, &buffer2[..n2]);
+        // let mut buffer3 = [0; 1];
+        // let n3 = self.serial_port.read(&mut buffer3)?;
+        // println!("buffer3: {}, {:?}", n3, &buffer3[..n3]);
 
 
-        let mut buffer3 = [0; 1];
-        let n3 = self.serial_port.read(&mut buffer3)?;
-        println!("buffer3: {}, {:?}", n3, &buffer3[..n3]);
+        // let mut buffer4 = [0; 1];
+        // let n4 = self.serial_port.read(&mut buffer4)?;
+        // println!("buffer4: {}, {:?}", n4, &buffer4[..n4]);
 
 
-        let mut buffer4 = [0; 1];
-        let n4 = self.serial_port.read(&mut buffer4)?;
-        println!("buffer4: {}, {:?}", n4, &buffer4[..n4]);
+        // let mut buffer5 = [0; 1];
+        // let n5 = self.serial_port.read(&mut buffer5)?;
+        // println!("buffer5: {}, {:?}", n5, &buffer5[..n5]);
 
-
-        let mut buffer5 = [0; 1];
-        let n5 = self.serial_port.read(&mut buffer5)?;
-        println!("buffer5: {}, {:?}", n5, &buffer5[..n5]);
-
-        let s = match String::from_utf8([buffer, buffer2, buffer3, buffer4, buffer5].concat()) {
+        let s = match String::from_utf8(longbuffer) {
             Ok(v) => println!("{}", v),
             Err(e) => panic!("Invalid UTF-8 sequence: {}", e),
         };
