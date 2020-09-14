@@ -1,4 +1,4 @@
-use std::{io::BufReader, thread, time::Duration, io};
+use std::{io::BufReader, thread, time::Duration, io, time};
 
 use serialport::SerialPort;
 use io::{Write};
@@ -110,20 +110,20 @@ pub trait NeatoRobot {
 
 pub struct DSeries<'a> {
     serial_port: Box<dyn SerialPort + 'a>,
-    motor_status: MotorStatus,
-    analog_sensor_status: AnalogSensorStatus,
-    digital_sensor_status: DigitalSensorStatus,
-    charger_status: ChargerStatus,
+    // motor_status: MotorStatus,
+    // analog_sensor_status: AnalogSensorStatus,
+    // digital_sensor_status: DigitalSensorStatus,
+    // charger_status: ChargerStatus,
 }
 
 impl DSeries<'_> {
     pub fn new(serial_port: Box<dyn SerialPort>) -> Self {
         Self {
             serial_port: serial_port,
-            motor_status: MotorStatus{..Default::default()},
-            analog_sensor_status: AnalogSensorStatus{..Default::default()},
-            digital_sensor_status: DigitalSensorStatus{..Default::default()},
-            charger_status: ChargerStatus{..Default::default()},
+            // motor_status: MotorStatus{..Default::default()},
+            // analog_sensor_status: AnalogSensorStatus{..Default::default()},
+            // digital_sensor_status: DigitalSensorStatus{..Default::default()},
+            // charger_status: ChargerStatus{..Default::default()},
         }
     }
 }

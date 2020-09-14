@@ -1,4 +1,4 @@
-use std::{time, thread, env, io::stdin, io::Read};
+use std::{time, thread, env};
 
 use neato_driver::{DSeries, NeatoRobot, Toggle};
 use serialport::{SerialPortSettings, FlowControl};
