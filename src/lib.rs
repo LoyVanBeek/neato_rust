@@ -1,4 +1,4 @@
-use std::{io::BufReader, thread, time::Duration, io, time};
+use std::{thread, io, time};
 
 use serialport::SerialPort;
 use io::{Write};
@@ -157,12 +157,12 @@ impl NeatoRobot for DSeries <'_> {
         log::debug!("Setting testmode");
         writeln!(self.serial_port, "testmode {}", value.to_string())?;
 
-        let s = match self.read_line() {
+        let _s = match self.read_line() {
             Ok(v) => println!("{}", v),
             Err(_) => println!("Error reading back"),
         };
 
-        // self.serial_port.flush()?;
+        self.serial_port.flush()?;
         log::debug!("Set testmode");
         Ok(())
     }
@@ -171,12 +171,12 @@ impl NeatoRobot for DSeries <'_> {
         log::debug!("Setting ldsrotation");
         writeln!(self.serial_port, "setldsrotation {}", value.to_string())?;
                 
-        let s = match self.read_line() {
+        let _s = match self.read_line() {
             Ok(v) => println!("{}", v),
             Err(_) => println!("Error reading back"),
         };
 
-        // self.serial_port.flush()?;
+        self.serial_port.flush()?;
         log::debug!("Set ldsrotation");
         Ok(())
     }
@@ -185,7 +185,7 @@ impl NeatoRobot for DSeries <'_> {
         log::debug!("Requesting scan");
         writeln!(self.serial_port, "getldsscan")?;
 
-        let s = match self.read_line() {
+        let _s = match self.read_line() {
             Ok(v) => println!("{}", v),
             Err(_) => println!("Error reading back"),
         };
@@ -203,12 +203,12 @@ impl NeatoRobot for DSeries <'_> {
         for _n in 1..100 {
             let mut buffer = [0; 1];
             let n = self.serial_port.read(&mut buffer)?;
-            println!("buffer: {}, {:?}", n, &buffer[..n]);
+            // println!("buffer: {}, {:?}", n, &buffer[..n]);
             let ch = buffer[0];
-            longbuffer.push(ch);
             if ch as char == '\n' {
                 break;
             }
+            longbuffer.push(ch);
         }
 
         let s = String::from_utf8(longbuffer)?;
@@ -217,10 +217,10 @@ impl NeatoRobot for DSeries <'_> {
 
     fn get_scan_ranges(&mut self) -> Result<Vec<f32>, GetDataError> {
         log::debug!("Reading serial_port for scan_ranges");
-        thread::sleep(time::Duration::from_secs(1));
-        let s = self.read_line()?;
-        println!("{}", s);
-
+        for _n in 1..363 {  // 1 header line + 360? lines of distances for each degree + 1 trailing line
+            let s = self.read_line()?;
+            println!("{}", s);
+        }
         log::debug!("Got scan_ranges");
         Ok(vec![])
     }
