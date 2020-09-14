@@ -93,7 +93,7 @@ pub trait NeatoRobot {
     fn set_ldsrotation(&mut self, value: Toggle) -> std::io::Result<()>;
 
     fn request_scan(&mut self) -> std::io::Result<()>;
-    fn get_scan_ranges(&mut self) -> Result<Vec<f32>, std::io::Error>;
+    fn get_scan_ranges(&mut self) -> Result<Vec<f32>, GetDataError>;
 
     fn set_motors(&mut self, left_distance: i32, right_distance: i32, speed: i32) -> std::io::Result<()>;
     fn get_motors(&mut self) -> Result<MotorStatus, std::io::Error>;
@@ -103,6 +103,8 @@ pub trait NeatoRobot {
     fn get_charger(&mut self) -> Result<ChargerStatus, std::io::Error>;
 
     fn set_backlight(&mut self, value: Toggle) -> std::io::Result<()>;
+
+    fn read_line(&mut self) -> Result<String, GetDataError>;
 }
 
 
@@ -166,26 +168,29 @@ impl NeatoRobot for DSeries <'_> {
         Ok(())
     }
 
-    fn get_scan_ranges(&mut self) -> Result<Vec<f32>, std::io::Error> {
-        // let mut buffer = String::new();
-        log::debug!("Reading serial_port for scan_ranges");
-        // self.serial_port.read_to_string(&mut buffer)?;
-
-
+    fn read_line(&mut self) -> Result<String, GetDataError> {
         let mut longbuffer = vec![];
 
-        for _n in 1..12 {
+        for _n in 1..100 {
             let mut buffer = [0; 1];
-            let n = self.serial_port.read(&mut buffer)?;
+            let n = self.serial_port.read(&mut buffer).map_err(GetDataError::Io)?;
             println!("buffer: {}, {:?}", n, &buffer[..n]);
             let ch = buffer[0];
             longbuffer.push(ch);
+            if ch as char == '\n' {
+                break;
+            }
         }
 
-        let _s = match String::from_utf8(longbuffer) {
-            Ok(v) => println!("{}", v),
-            Err(e) => panic!("Invalid UTF-8 sequence: {}", e),
-        };
+        let s = String::from_utf8(longbuffer).map_err(GetDataError::Parse)?;
+        return Ok(s);
+    }
+
+    fn get_scan_ranges(&mut self) -> Result<Vec<f32>, GetDataError> {
+        log::debug!("Reading serial_port for scan_ranges");
+        thread::sleep(time::Duration::from_secs(1));
+        let s = self.read_line()?;
+        println!("{}", s);
 
         log::debug!("Got scan_ranges");
         Ok(vec![])
