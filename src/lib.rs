@@ -254,8 +254,20 @@ impl NeatoRobot for DSeries <'_> {
         Ok(ranges)
     }
 
-    fn set_motors(&mut self, _left_distance: i32, _right_distance: i32, _speed: i32) -> std::io::Result<()> {
-        todo!()
+    fn set_motors(&mut self, left_distance: i32, right_distance: i32, speed: i32) -> std::io::Result<()> {
+        log::debug!("set_motors({}, {}, {})", left_distance, right_distance, speed);
+        
+        writeln!(self.serial_port, "setmotor {} {} {}\n", left_distance, right_distance, speed)?;
+
+        let _s = match self.read_line() {
+            Ok(v) => println!("{}", v),
+            Err(_) => println!("Error reading back"),
+        };
+
+        self.serial_port.flush()?;
+        log::debug!("Set motors");
+        Ok(())
+
     }
 
     fn get_motors(&mut self) -> Result<MotorStatus, std::io::Error> {

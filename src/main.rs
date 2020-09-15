@@ -43,8 +43,11 @@ fn main() {
             // robot.exit().expect("Failed to exit robot while handling err");
         }
     }
-    let wait = time::Duration::from_secs(5);
-    thread::sleep(wait);
+    // thread::sleep(time::Duration::from_secs(5));
+
+    robot.set_motors(20, 20, 10).expect("Could not set motors");
+    thread::sleep(time::Duration::from_secs(5));
+    robot.set_motors(-20, -20, 10).expect("Could not set motors");
 
     robot.exit().expect("Failed to exit robot");
 }
