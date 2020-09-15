@@ -29,6 +29,8 @@ fn main() {
 
     robot.set_testmode(Toggle::On).expect("Failed to enable testmode");
     thread::sleep(time::Duration::from_millis(500));
+
+    robot.set_backlight(Toggle::Off).unwrap();
     
     robot.set_ldsrotation(Toggle::On).expect("Failed to enable LDS rotation");
     
@@ -48,6 +50,8 @@ fn main() {
     robot.set_motors(20, 20, 10).expect("Could not set motors");
     thread::sleep(time::Duration::from_secs(5));
     robot.set_motors(-20, -20, 10).expect("Could not set motors");
+
+    robot.set_backlight(Toggle::On).unwrap();
 
     robot.exit().expect("Failed to exit robot");
 }
