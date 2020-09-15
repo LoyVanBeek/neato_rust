@@ -96,11 +96,11 @@ pub trait NeatoRobot {
     fn get_scan_ranges(&mut self) -> Result<Vec<f32>, GetDataError>;
 
     fn set_motors(&mut self, left_distance: i32, right_distance: i32, speed: i32) -> std::io::Result<()>;
-    fn get_motors(&mut self) -> Result<MotorStatus, std::io::Error>;
+    fn get_motors(&mut self) -> Result<MotorStatus, GetDataError>;
 
-    fn get_analog_sensors(&mut self) -> Result<AnalogSensorStatus, std::io::Error>;
-    fn get_digital_sensors(&mut self) -> Result<DigitalSensorStatus, std::io::Error>;
-    fn get_charger(&mut self) -> Result<ChargerStatus, std::io::Error>;
+    fn get_analog_sensors(&mut self) -> Result<AnalogSensorStatus, GetDataError>;
+    fn get_digital_sensors(&mut self) -> Result<DigitalSensorStatus, GetDataError>;
+    fn get_charger(&mut self) -> Result<ChargerStatus, GetDataError>;
 
     fn set_backlight(&mut self, value: Toggle) -> std::io::Result<()>;
 
@@ -270,19 +270,21 @@ impl NeatoRobot for DSeries <'_> {
 
     }
 
-    fn get_motors(&mut self) -> Result<MotorStatus, std::io::Error> {
+    fn get_motors(&mut self) -> Result<MotorStatus, GetDataError> {
+        log::debug!("get_motors");
+        let mut ranges = vec![];
+        Ok(ranges)
+    }
+
+    fn get_analog_sensors(&mut self) -> Result<AnalogSensorStatus, GetDataError> {
         todo!()
     }
 
-    fn get_analog_sensors(&mut self) -> Result<AnalogSensorStatus, std::io::Error> {
+    fn get_digital_sensors(&mut self) -> Result<DigitalSensorStatus, GetDataError> {
         todo!()
     }
 
-    fn get_digital_sensors(&mut self) -> Result<DigitalSensorStatus, std::io::Error> {
-        todo!()
-    }
-
-    fn get_charger(&mut self) -> Result<ChargerStatus, std::io::Error> {
+    fn get_charger(&mut self) -> Result<ChargerStatus, GetDataError> {
         todo!()
     }
 
