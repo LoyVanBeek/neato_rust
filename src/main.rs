@@ -48,6 +48,8 @@ fn main() {
     // thread::sleep(time::Duration::from_secs(5));
 
     robot.set_motors(20, 20, 10).expect("Could not set motors");
+    let motor_status = robot.get_motors().expect("Could not get motor data");
+    println!("{:?}", motor_status);
     thread::sleep(time::Duration::from_secs(5));
     robot.set_motors(-20, -20, 10).expect("Could not set motors");
 

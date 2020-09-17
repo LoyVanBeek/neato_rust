@@ -177,7 +177,7 @@ impl FromStr for FloatField {
         let fields: Vec<&str> = s.split(',')
                                  .collect();
         let name = String::from(fields[0]);
-        let value = fields[1].parse::<f32>()?;
+        let value = fields[1].trim().parse::<f32>()?;
 
         Ok(FloatField {  name: name, value: value})
     }
@@ -189,8 +189,11 @@ impl FromStr for IntField {
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let fields: Vec<&str> = s.split(',')
                                  .collect();
+
+        log::debug!("{:?}", fields);
+
         let name = String::from(fields[0]);
-        let value = fields[1].parse::<i32>()?;
+        let value = fields[1].trim().parse::<i32>()?;
 
         Ok(IntField {name: name, value: value})
     }
@@ -208,10 +211,23 @@ impl NeatoRobot for DSeries <'_> {
         log::debug!("Setting testmode");
         writeln!(self.serial_port, "testmode {}", value.to_string())?;
 
-        let _s = match self.read_line() {
-            Ok(v) => println!("{}", v),
-            Err(_) => println!("Error reading back"),
-        };
+        loop {
+            let s = match self.read_line() {
+                Ok(v) => {
+                    println!("{}", v); 
+                    v},
+                Err(_) => {
+                    println!("Error reading back"); 
+                    String::new()},
+            };
+            if s.contains("testmode") {
+                println!("Serial port synced.");
+                break;
+            }
+            else {
+                println!("Serial port not yet in sync");
+            }
+        }
 
         self.serial_port.flush()?;
         log::debug!("Set testmode");
@@ -221,7 +237,7 @@ impl NeatoRobot for DSeries <'_> {
     fn set_ldsrotation(&mut self, value: Toggle) -> std::io::Result<()> {
         log::debug!("Setting ldsrotation");
         writeln!(self.serial_port, "setldsrotation {}", value.to_string())?;
-                
+    
         let _s = match self.read_line() {
             Ok(v) => println!("{}", v),
             Err(_) => println!("Error reading back"),
@@ -326,14 +342,43 @@ impl NeatoRobot for DSeries <'_> {
 
         self.serial_port.flush()?;
 
-        let status = MotorStatus{
+        log::debug!("Serial port flushed");
+
+        let mut status = MotorStatus{
             ..Default::default()
         };
 
+        log::debug!("Reading values...");
+        loop {
+            let header = self.read_line()?;
+            log::debug!("{}", header);
+
+            if header.contains("Parameter,Value") {
+                break;
+            }
+        }
+            
         for _n in 1..13 { // 13 fields
             let s = self.read_line()?;
-            let _field = IntField::from_str(s.as_str())?;
-            // match field.name.as_str() {}
+            log::debug!("{}", s);
+            let field = IntField::from_str(s.as_str())?;
+            log::debug!("{:?}", field);
+            match field.name.as_str() {
+                "Brush_RPM" => status.brush_rpm = field.value,
+                "Brush_mA" => status.brush_ma = field.value,
+                "Vacuum_RPM" => status.vacuum_rpm = field.value,
+                "Vacuum_mA" => status.vacuum_ma = field.value,
+                "LeftWheel_RPM" => status.left_wheel_rpm = field.value,
+                "LeftWheel_Load%" => status.left_wheel_load = field.value,
+                "LeftWheel_PositionInMM" => status.left_wheel_position_in_mm = field.value,
+                "LeftWheel_Speed" => status.left_wheel_speed = field.value,
+                "RightWheel_RPM" => status.right_wheel_rpm = field.value,
+                "RightWheel_Load%" => status.right_wheel_load = field.value,
+                "RightWheel_PositionInMM" => status.right_wheel_position_in_mm = field.value,
+                "RightWheel_Speed" => status.right_wheel_speed = field.value,
+                "SideBrush_mA" => status.side_brush_ma = field.value,
+                _ => log::error!("Unrecognized field: {:?}", field),
+            }
         };
         log::debug!("Got motors");
         Ok(status)
