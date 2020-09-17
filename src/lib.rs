@@ -1,4 +1,4 @@
-use std::{thread, io, time, num::ParseIntError};
+use std::{thread, io, time, num::ParseIntError, num::ParseFloatError, str::FromStr};
 
 use serialport::SerialPort;
 use io::{Write};
@@ -19,7 +19,7 @@ impl ToString for Toggle {
     // add code here
 }
 
-#[derive(Debug, Default)]
+#[derive(Debug, Default, Copy, Clone)]
 pub struct MotorStatus {
     brush_rpm: i32,
     brush_ma: i32,
@@ -33,7 +33,7 @@ pub struct MotorStatus {
     right_wheel_load: i32,
     right_wheel_position_in_mm: i32,
     right_wheel_speed: i32,
-    side_bruch_ma: i32,
+    side_brush_ma: i32,
 }
 
 #[derive(Debug, Default)]
@@ -134,6 +134,13 @@ pub enum GetDataError {
     Parse(std::string::FromUtf8Error),
     ParseData(ParseIntError),
 }
+
+#[derive(Debug)]
+pub enum ParseNumberError {
+    ParseInt(ParseIntError),
+    ParseFloat(ParseFloatError),
+}
+
 impl From<io::Error> for GetDataError {
     fn from(err: io::Error) -> GetDataError {
         GetDataError::Io(err)
@@ -149,6 +156,43 @@ impl From<std::string::FromUtf8Error> for GetDataError {
 impl From<ParseIntError> for GetDataError {
     fn from(err: ParseIntError) -> GetDataError {
         GetDataError::ParseData(err)
+    }
+}
+
+#[derive(Debug, PartialEq, Default)]
+struct FloatField{
+    name: String,
+    value: f32,
+}
+#[derive(Debug, PartialEq, Default)]
+struct IntField{
+    name: String,
+    value: i32,
+}
+
+impl FromStr for FloatField {
+    type Err = ParseFloatError;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let fields: Vec<&str> = s.split(',')
+                                 .collect();
+        let name = String::from(fields[0]);
+        let value = fields[1].parse::<f32>()?;
+
+        Ok(FloatField {  name: name, value: value})
+    }
+}
+
+impl FromStr for IntField {
+    type Err = ParseIntError;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let fields: Vec<&str> = s.split(',')
+                                 .collect();
+        let name = String::from(fields[0]);
+        let value = fields[1].parse::<i32>()?;
+
+        Ok(IntField {name: name, value: value})
     }
 }
 
@@ -272,8 +316,27 @@ impl NeatoRobot for DSeries <'_> {
 
     fn get_motors(&mut self) -> Result<MotorStatus, GetDataError> {
         log::debug!("get_motors");
-        let mut ranges = vec![];
-        Ok(ranges)
+
+        writeln!(self.serial_port, "getmotors\n")?;
+
+        let _s = match self.read_line() {
+            Ok(v) => println!("{}", v),
+            Err(_) => println!("Error reading back"),
+        };
+
+        self.serial_port.flush()?;
+
+        let status = MotorStatus{
+            ..Default::default()
+        };
+
+        for _n in 1..13 { // 13 fields
+            let s = self.read_line()?;
+            let _field = IntField::from_str(s.as_str())?;
+            // match field.name.as_str() {}
+        };
+        log::debug!("Got motors");
+        Ok(status)
     }
 
     fn get_analog_sensors(&mut self) -> Result<AnalogSensorStatus, GetDataError> {
