@@ -136,7 +136,8 @@ impl DSeries<'_> {
 pub enum GetDataError {
     Io(io::Error),
     Parse(std::string::FromUtf8Error),
-    ParseData(ParseIntError),
+    ParseIntData(ParseIntError),
+    ParseFloatData(ParseFloatError),
 }
 
 #[derive(Debug)]
@@ -159,13 +160,19 @@ impl From<std::string::FromUtf8Error> for GetDataError {
 
 impl From<ParseIntError> for GetDataError {
     fn from(err: ParseIntError) -> GetDataError {
-        GetDataError::ParseData(err)
+        GetDataError::ParseIntData(err)
+    }
+}
+impl From<ParseFloatError> for GetDataError {
+    fn from(err: ParseFloatError) -> GetDataError {
+        GetDataError::ParseFloatData(err)
     }
 }
 
 #[derive(Debug, PartialEq, Default)]
 struct FloatField {
     name: String,
+    unit: String,
     value: f32,
 }
 #[derive(Debug, PartialEq, Default)]
@@ -180,10 +187,12 @@ impl FromStr for FloatField {
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let fields: Vec<&str> = s.split(',').collect();
         let name = String::from(fields[0]);
-        let value = fields[1].trim().parse::<f32>()?;
+        let unit = String::from(fields[1]);
+        let value = fields[2].trim().parse::<f32>()?;
 
         Ok(FloatField {
             name: name,
+            unit: unit,
             value: value,
         })
     }
@@ -312,7 +321,7 @@ impl NeatoRobot for DSeries<'_> {
                             Ok(range) => ranges.push((range as f32) / 1000.0), // millimeters to meters
                             Err(err) => {
                                 println!("Could not parse {}", s);
-                                return Err(GetDataError::ParseData(err));
+                                return Err(GetDataError::ParseIntData(err));
                             }
                         };
                     }
@@ -409,7 +418,59 @@ impl NeatoRobot for DSeries<'_> {
     }
 
     fn get_analog_sensors(&mut self) -> Result<AnalogSensorStatus, GetDataError> {
-        todo!()
+        log::debug!("get_analog_sensors");
+
+        writeln!(self.serial_port, "getanalogsensors\n")?;
+
+        let _s = match self.read_line() {
+            Ok(v) => println!("{}", v),
+            Err(_) => println!("Error reading back"),
+        };
+
+        self.serial_port.flush()?;
+
+        log::debug!("Serial port flushed");
+
+        let mut status = AnalogSensorStatus {
+            ..Default::default()
+        };
+
+        log::debug!("Reading values...");
+        loop {
+            let header = self.read_line()?;
+            log::debug!("{}", header);
+
+            if header.contains("SensorName,Unit,Value") {
+                break;
+            }
+        }
+
+        for _n in 1..14 {
+            // 13 fields
+            let s = self.read_line()?;
+            log::debug!("{}", s);
+            let field = FloatField::from_str(s.as_str())?;
+            log::debug!("{:?}", field);
+            match field.name.as_str() {
+                "BatteryVoltage" => status.battery_voltage = field.value,
+                "BatteryCurrent" => status.battery_current = field.value,
+                "BatteryTemperature" => status.battery_temperature = field.value,
+                "ExternalVoltage" => status.external_voltage = field.value,
+                "AccelerometerX" => status.accelerometer_x = field.value,
+                "AccelerometerY" => status.accelerometer_y = field.value,
+                "AccelerometerZ" => status.accelerometer_z = field.value,
+                "VacuumCurrent" => status.vacuum_current = field.value,
+                "SideBrushCurrent" => status.side_brush_current = field.value,
+                "MagSensorLeft" => status.mag_sensor_left = field.value,
+                "MagSensorRight" => status.mag_sensor_right = field.value,
+                "WallSensor" => status.wall_sensor = field.value,
+                "DropSensorLeft" => status.drop_sensor_left = field.value,
+                "DropSensorRight" => status.drop_sensor_right = field.value,
+                _ => log::error!("Unrecognized field: {:?}", field),
+            }
+        }
+        log::debug!("Got motors");
+        Ok(status)
     }
 
     fn get_digital_sensors(&mut self) -> Result<DigitalSensorStatus, GetDataError> {
