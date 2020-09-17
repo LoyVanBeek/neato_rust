@@ -1,4 +1,4 @@
-use std::{io, num::ParseFloatError, num::ParseIntError, str::FromStr, thread, time};
+use std::{io, num::ParseFloatError, num::ParseIntError, str::FromStr, thread, time, fmt::Display};
 
 use io::Write;
 use serialport::SerialPort;
@@ -19,7 +19,7 @@ impl ToString for Toggle {
     // add code here
 }
 
-#[derive(Debug, Default, Copy, Clone)]
+#[derive(Debug, Default, Clone, Copy)]
 pub struct MotorStatus {
     brush_rpm: i32,
     brush_ma: i32,
@@ -36,7 +36,7 @@ pub struct MotorStatus {
     side_brush_ma: i32,
 }
 
-#[derive(Debug, Default)]
+#[derive(Debug, Default, Clone, Copy)]
 pub struct AnalogSensorStatus {
     battery_voltage: f32,
     battery_current: f32,
@@ -54,7 +54,7 @@ pub struct AnalogSensorStatus {
     drop_sensor_right: f32,
 }
 
-#[derive(Debug, Default)]
+#[derive(Debug, Default, Clone, Copy)]
 pub struct DigitalSensorStatus {
     sensor_dc_jack_is_in: bool,
     sensor_dustbin_is_in: bool,
@@ -68,7 +68,7 @@ pub struct DigitalSensorStatus {
     right_ldsbit: bool,
 }
 
-#[derive(Debug, Default)]
+#[derive(Debug, Default, Clone, Copy)]
 pub struct ChargerStatus {
     fuel_percent: i32,
     battery_over_tmp: i32,
@@ -114,20 +114,26 @@ pub trait NeatoRobot {
 
 pub struct DSeries<'a> {
     serial_port: Box<dyn SerialPort + 'a>,
-    // motor_status: MotorStatus,
-    // analog_sensor_status: AnalogSensorStatus,
-    // digital_sensor_status: DigitalSensorStatus,
-    // charger_status: ChargerStatus,
+    motor_status: MotorStatus,
+    analog_sensor_status: AnalogSensorStatus,
+    digital_sensor_status: DigitalSensorStatus,
+    charger_status: ChargerStatus,
+}
+
+impl Display for DSeries<'_> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "({:?}, {:?}, {:?}, {:?})", self.motor_status, self.analog_sensor_status, self.digital_sensor_status, self.charger_status)
+    }
 }
 
 impl DSeries<'_> {
     pub fn new(serial_port: Box<dyn SerialPort>) -> Self {
         Self {
             serial_port: serial_port,
-            // motor_status: MotorStatus{..Default::default()},
-            // analog_sensor_status: AnalogSensorStatus{..Default::default()},
-            // digital_sensor_status: DigitalSensorStatus{..Default::default()},
-            // charger_status: ChargerStatus{..Default::default()},
+            motor_status: MotorStatus{..Default::default()},
+            analog_sensor_status: AnalogSensorStatus{..Default::default()},
+            digital_sensor_status: DigitalSensorStatus{..Default::default()},
+            charger_status: ChargerStatus{..Default::default()},
         }
     }
 }
@@ -455,6 +461,7 @@ impl NeatoRobot for DSeries<'_> {
                 _ => log::error!("Unrecognized field: {:?}", field),
             }
         }
+        self.motor_status = status;
         log::debug!("Got motors");
         Ok(status)
     }
@@ -511,6 +518,7 @@ impl NeatoRobot for DSeries<'_> {
                 _ => log::error!("Unrecognized field: {:?}", field),
             }
         }
+        self.analog_sensor_status = status;
         log::debug!("Got analog_sensors");
         Ok(status)
     }
@@ -563,6 +571,7 @@ impl NeatoRobot for DSeries<'_> {
                 _ => log::error!("Unrecognized field: {:?}", field),
             }
         }
+        self.digital_sensor_status = status;
         log::debug!("Got digital_sensors");
         Ok(status)
     }
@@ -636,6 +645,7 @@ impl NeatoRobot for DSeries<'_> {
                 }
             };
         };
+        self.charger_status = status;
         log::debug!("Got charger");
         Ok(status)
     }

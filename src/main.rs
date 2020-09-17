@@ -63,6 +63,8 @@ fn main() {
     let charger_status = robot.get_charger().expect("Could not get charger status");
     println!("{:?}", charger_status);
 
+    println!("{}", robot);
+
     thread::sleep(time::Duration::from_secs(5));
     robot
         .set_motors(-20, -20, 10)
