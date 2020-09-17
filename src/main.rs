@@ -57,6 +57,9 @@ fn main() {
     let analog_status = robot.get_analog_sensors().expect("Could not get analog sensors");
     println!("{:?}", analog_status);
 
+    let digital_status = robot.get_digital_sensors().expect("Could not get digital sensors");
+    println!("{:?}", digital_status);
+
     thread::sleep(time::Duration::from_secs(5));
     robot
         .set_motors(-20, -20, 10)

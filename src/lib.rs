@@ -180,6 +180,11 @@ struct IntField {
     name: String,
     value: i32,
 }
+#[derive(Debug, PartialEq, Default)]
+struct BoolField {
+    name: String,
+    value: bool,
+}
 
 impl FromStr for FloatField {
     type Err = ParseFloatError;
@@ -212,6 +217,24 @@ impl FromStr for IntField {
         Ok(IntField {
             name: name,
             value: value,
+        })
+    }
+}
+
+impl FromStr for BoolField {
+    type Err = ParseIntError;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let fields: Vec<&str> = s.split(',').collect();
+
+        log::debug!("{:?}", fields);
+
+        let name = String::from(fields[0]);
+        let value = fields[1].trim().parse::<i32>()?;
+
+        Ok(BoolField {
+            name: name,
+            value: value == 1,
         })
     }
 }
@@ -469,12 +492,60 @@ impl NeatoRobot for DSeries<'_> {
                 _ => log::error!("Unrecognized field: {:?}", field),
             }
         }
-        log::debug!("Got motors");
+        log::debug!("Got analog_sensors");
         Ok(status)
     }
 
     fn get_digital_sensors(&mut self) -> Result<DigitalSensorStatus, GetDataError> {
-        todo!()
+        log::debug!("get_digital_sensors");
+
+        writeln!(self.serial_port, "getdigitalsensors\n")?;
+
+        let _s = match self.read_line() {
+            Ok(v) => println!("{}", v),
+            Err(_) => println!("Error reading back"),
+        };
+
+        self.serial_port.flush()?;
+
+        log::debug!("Serial port flushed");
+
+        let mut status = DigitalSensorStatus {
+            ..Default::default()
+        };
+
+        log::debug!("Reading values...");
+        loop {
+            let header = self.read_line()?;
+            log::debug!("{}", header);
+
+            if header.contains("Digital Sensor Name, Value") {
+                break;
+            }
+        }
+
+        for _n in 1..10 {
+            // 10 fields
+            let s = self.read_line()?;
+            log::debug!("{}", s);
+            let field = BoolField::from_str(s.as_str())?;
+            log::debug!("{:?}", field);
+            match field.name.as_str() {
+                "SNSR_DC_JACK_IS_IN" => status.sensor_dc_jack_is_in = field.value,
+                "SNSR_DUSTBIN_IS_IN" => status.sensor_dustbin_is_in = field.value,
+                "SNSR_LEFT_WHEEL_EXTENDED" => status.sensor_left_wheel_extended = field.value,
+                "SNSR_RIGHT_WHEEL_EXTENDED" => status.sensor_right_wheel_extended = field.value,
+                "LSIDEBIT" => status.left_sidebit = field.value,
+                "LFRONTBIT" => status.left_frontbit = field.value,
+                "LLDSBIT" => status.left_ldsbit = field.value,
+                "RSIDEBIT" => status.right_sidebit = field.value,
+                "RFRONTBIT" => status.right_frontbit = field.value,
+                "RLDSBIT" => status.right_ldsbit = field.value,
+                _ => log::error!("Unrecognized field: {:?}", field),
+            }
+        }
+        log::debug!("Got digital_sensors");
+        Ok(status)
     }
 
     fn get_charger(&mut self) -> Result<ChargerStatus, GetDataError> {
