@@ -73,7 +73,7 @@ pub struct ChargerStatus {
     fuel_percent: i32,
     battery_over_tmp: i32,
     charging_active: i32,
-    charging_anabled: i32,
+    charging_enabled: i32,
     confident_on_fuel: i32,
     on_reserved_fuel: i32,
     empty_fuel: i32,
@@ -81,8 +81,8 @@ pub struct ChargerStatus {
     ext_pwr_present: i32,
     thermistor_present: i32,
     batt_temp_c_avg: i32,
-    v_batt_v_v: i32,
-    v_ext_v: i32,
+    v_batt_v_v: f32,
+    v_ext_v: f32,
     charger_mah: i32,
     discharge_mah: i32,
 }
@@ -170,7 +170,7 @@ impl From<ParseFloatError> for GetDataError {
 }
 
 #[derive(Debug, PartialEq, Default)]
-struct FloatField {
+struct UnitFloatField {
     name: String,
     unit: String,
     value: f32,
@@ -185,8 +185,13 @@ struct BoolField {
     name: String,
     value: bool,
 }
+#[derive(Debug, PartialEq, Default)]
+struct SimpleFloatField {
+    name: String,
+    value: f32,
+}
 
-impl FromStr for FloatField {
+impl FromStr for UnitFloatField {
     type Err = ParseFloatError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
@@ -195,7 +200,7 @@ impl FromStr for FloatField {
         let unit = String::from(fields[1]);
         let value = fields[2].trim().parse::<f32>()?;
 
-        Ok(FloatField {
+        Ok(UnitFloatField {
             name: name,
             unit: unit,
             value: value,
@@ -239,6 +244,20 @@ impl FromStr for BoolField {
     }
 }
 
+impl FromStr for SimpleFloatField {
+    type Err = ParseFloatError;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let fields: Vec<&str> = s.split(',').collect();
+        let name = String::from(fields[0]);
+        let value = fields[1].trim().parse::<f32>()?;
+
+        Ok(SimpleFloatField {
+            name: name,
+            value: value,
+        })
+    }
+}
 impl NeatoRobot for DSeries<'_> {
     fn exit(&mut self) -> std::io::Result<()> {
         self.set_ldsrotation(Toggle::Off)?;
@@ -472,7 +491,7 @@ impl NeatoRobot for DSeries<'_> {
             // 13 fields
             let s = self.read_line()?;
             log::debug!("{}", s);
-            let field = FloatField::from_str(s.as_str())?;
+            let field = UnitFloatField::from_str(s.as_str())?;
             log::debug!("{:?}", field);
             match field.name.as_str() {
                 "BatteryVoltage" => status.battery_voltage = field.value,
@@ -549,7 +568,76 @@ impl NeatoRobot for DSeries<'_> {
     }
 
     fn get_charger(&mut self) -> Result<ChargerStatus, GetDataError> {
-        todo!()
+        log::debug!("get_charger");
+
+        writeln!(self.serial_port, "getcharger\n")?;
+
+        let _s = match self.read_line() {
+            Ok(v) => println!("{}", v),
+            Err(_) => println!("Error reading back"),
+        };
+
+        self.serial_port.flush()?;
+
+        log::debug!("Serial port flushed");
+
+        let mut status = ChargerStatus {
+            ..Default::default()
+        };
+
+        log::debug!("Reading values...");
+        loop {
+            let header = self.read_line()?;
+            log::debug!("{}", header);
+
+            if header.contains("Label,Value") {
+                break;
+            }
+        }
+
+        for _n in 1..15 {
+            // 15 fields
+            let s = self.read_line()?;
+            log::debug!("{}", s);
+            let _ = match IntField::from_str(s.as_str()){
+                Ok(field) => {
+                    log::debug!("{:?}", field);
+                    match field.name.as_str() {
+                        "FuelPercent" => status.fuel_percent = field.value,
+                        "BatteryOverTemp" => status.battery_over_tmp = field.value,
+                        "ChargingActive" => status.charging_active = field.value,
+                        "ChargingEnabled" => status.charging_enabled = field.value,
+                        "ConfidentOnFuel" => status.confident_on_fuel = field.value,
+                        "OnReservedFuel" => status.on_reserved_fuel = field.value,
+                        "EmptyFuel" => status.empty_fuel = field.value,
+                        "BatteryFailure" => status.battery_failure = field.value,
+                        "ExtPwrPresent" => status.ext_pwr_present = field.value,
+                        "ThermistorPresent" => status.thermistor_present = field.value,
+                        "BattTempCAvg" => status.batt_temp_c_avg = field.value,
+                        "Charger_mAH" => status.charger_mah = field.value,
+                        "Discharge_mAH" => status.discharge_mah = field.value,
+                        _ => log::error!("Unrecognized field: {:?}", field),
+                    }
+                }
+                Err(ParseIntError) => {
+                    let _ = match SimpleFloatField::from_str(s.as_str()){
+                        Ok(field) => {
+                            log::debug!("{:?}", field);
+                            match field.name.as_str() {
+                                "VBattV" => status.v_batt_v_v = field.value,
+                                "VExtV" => status.v_ext_v = field.value,
+                                _ => log::error!("Unrecognized field: {:?}", field),
+                            }
+                        }
+                        Err(err) => {
+                            return Err(GetDataError::ParseFloatData(err))
+                        },
+                    };
+                }
+            };
+        };
+        log::debug!("Got charger");
+        Ok(status)
     }
 
     fn set_backlight(&mut self, value: Toggle) -> std::io::Result<()> {

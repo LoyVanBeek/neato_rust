@@ -60,6 +60,9 @@ fn main() {
     let digital_status = robot.get_digital_sensors().expect("Could not get digital sensors");
     println!("{:?}", digital_status);
 
+    let charger_status = robot.get_charger().expect("Could not get charger status");
+    println!("{:?}", charger_status);
+
     thread::sleep(time::Duration::from_secs(5));
     robot
         .set_motors(-20, -20, 10)
