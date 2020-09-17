@@ -1,7 +1,7 @@
-use std::{thread, io, time, num::ParseIntError, num::ParseFloatError, str::FromStr};
+use std::{io, num::ParseFloatError, num::ParseIntError, str::FromStr, thread, time};
 
+use io::Write;
 use serialport::SerialPort;
-use io::{Write};
 
 #[derive(Debug)]
 pub enum Toggle {
@@ -95,7 +95,12 @@ pub trait NeatoRobot {
     fn request_scan(&mut self) -> std::io::Result<()>;
     fn get_scan_ranges(&mut self) -> Result<Vec<f32>, GetDataError>;
 
-    fn set_motors(&mut self, left_distance: i32, right_distance: i32, speed: i32) -> std::io::Result<()>;
+    fn set_motors(
+        &mut self,
+        left_distance: i32,
+        right_distance: i32,
+        speed: i32,
+    ) -> std::io::Result<()>;
     fn get_motors(&mut self) -> Result<MotorStatus, GetDataError>;
 
     fn get_analog_sensors(&mut self) -> Result<AnalogSensorStatus, GetDataError>;
@@ -106,7 +111,6 @@ pub trait NeatoRobot {
 
     fn read_line(&mut self) -> Result<String, GetDataError>;
 }
-
 
 pub struct DSeries<'a> {
     serial_port: Box<dyn SerialPort + 'a>,
@@ -160,12 +164,12 @@ impl From<ParseIntError> for GetDataError {
 }
 
 #[derive(Debug, PartialEq, Default)]
-struct FloatField{
+struct FloatField {
     name: String,
     value: f32,
 }
 #[derive(Debug, PartialEq, Default)]
-struct IntField{
+struct IntField {
     name: String,
     value: i32,
 }
@@ -174,12 +178,14 @@ impl FromStr for FloatField {
     type Err = ParseFloatError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let fields: Vec<&str> = s.split(',')
-                                 .collect();
+        let fields: Vec<&str> = s.split(',').collect();
         let name = String::from(fields[0]);
         let value = fields[1].trim().parse::<f32>()?;
 
-        Ok(FloatField {  name: name, value: value})
+        Ok(FloatField {
+            name: name,
+            value: value,
+        })
     }
 }
 
@@ -187,44 +193,47 @@ impl FromStr for IntField {
     type Err = ParseIntError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let fields: Vec<&str> = s.split(',')
-                                 .collect();
+        let fields: Vec<&str> = s.split(',').collect();
 
         log::debug!("{:?}", fields);
 
         let name = String::from(fields[0]);
         let value = fields[1].trim().parse::<i32>()?;
 
-        Ok(IntField {name: name, value: value})
+        Ok(IntField {
+            name: name,
+            value: value,
+        })
     }
 }
 
-impl NeatoRobot for DSeries <'_> {
-    fn exit(&mut self) -> std::io::Result<()>{
+impl NeatoRobot for DSeries<'_> {
+    fn exit(&mut self) -> std::io::Result<()> {
         self.set_ldsrotation(Toggle::Off)?;
         self.set_testmode(Toggle::Off)?;
         // self.serial_port.flush()?;
         Ok(())
     }
 
-    fn set_testmode(&mut self, value: Toggle) -> std::io::Result<()>{
+    fn set_testmode(&mut self, value: Toggle) -> std::io::Result<()> {
         log::debug!("Setting testmode");
         writeln!(self.serial_port, "testmode {}", value.to_string())?;
 
         loop {
             let s = match self.read_line() {
                 Ok(v) => {
-                    println!("{}", v); 
-                    v},
+                    println!("{}", v);
+                    v
+                }
                 Err(_) => {
-                    println!("Error reading back"); 
-                    String::new()},
+                    println!("Error reading back");
+                    String::new()
+                }
             };
             if s.contains("testmode") {
                 println!("Serial port synced.");
                 break;
-            }
-            else {
+            } else {
                 println!("Serial port not yet in sync");
             }
         }
@@ -237,7 +246,7 @@ impl NeatoRobot for DSeries <'_> {
     fn set_ldsrotation(&mut self, value: Toggle) -> std::io::Result<()> {
         log::debug!("Setting ldsrotation");
         writeln!(self.serial_port, "setldsrotation {}", value.to_string())?;
-    
+
         let _s = match self.read_line() {
             Ok(v) => println!("{}", v),
             Err(_) => println!("Error reading back"),
@@ -289,7 +298,8 @@ impl NeatoRobot for DSeries <'_> {
 
         let mut ranges = vec![];
 
-        for _n in 1..363 {  // 1 header line + 360? lines of distances for each degree + 1 trailing line
+        for _n in 1..363 {
+            // 1 header line + 360? lines of distances for each degree + 1 trailing line
             let s = self.read_line()?;
             println!("{}", s);
             if !s.starts_with("ROTATION") && !s.starts_with("Angle") {
@@ -298,26 +308,40 @@ impl NeatoRobot for DSeries <'_> {
                 let range_str = vec.get(1);
                 match range_str {
                     Some(range_data) => {
-                        match range_data.parse::<i32>(){
-                            Ok(range) => ranges.push((range as f32)/1000.0),  // millimeters to meters
+                        match range_data.parse::<i32>() {
+                            Ok(range) => ranges.push((range as f32) / 1000.0), // millimeters to meters
                             Err(err) => {
                                 println!("Could not parse {}", s);
                                 return Err(GetDataError::ParseData(err));
-                            },
+                            }
                         };
                     }
                     None => println!("Could not get element from {}", s),
                 };
             };
-        };
+        }
         log::debug!("Got scan_ranges");
         Ok(ranges)
     }
 
-    fn set_motors(&mut self, left_distance: i32, right_distance: i32, speed: i32) -> std::io::Result<()> {
-        log::debug!("set_motors({}, {}, {})", left_distance, right_distance, speed);
-        
-        writeln!(self.serial_port, "setmotor {} {} {}\n", left_distance, right_distance, speed)?;
+    fn set_motors(
+        &mut self,
+        left_distance: i32,
+        right_distance: i32,
+        speed: i32,
+    ) -> std::io::Result<()> {
+        log::debug!(
+            "set_motors({}, {}, {})",
+            left_distance,
+            right_distance,
+            speed
+        );
+
+        writeln!(
+            self.serial_port,
+            "setmotor {} {} {}\n",
+            left_distance, right_distance, speed
+        )?;
 
         let _s = match self.read_line() {
             Ok(v) => println!("{}", v),
@@ -327,7 +351,6 @@ impl NeatoRobot for DSeries <'_> {
         self.serial_port.flush()?;
         log::debug!("Set motors");
         Ok(())
-
     }
 
     fn get_motors(&mut self) -> Result<MotorStatus, GetDataError> {
@@ -344,7 +367,7 @@ impl NeatoRobot for DSeries <'_> {
 
         log::debug!("Serial port flushed");
 
-        let mut status = MotorStatus{
+        let mut status = MotorStatus {
             ..Default::default()
         };
 
@@ -357,8 +380,9 @@ impl NeatoRobot for DSeries <'_> {
                 break;
             }
         }
-            
-        for _n in 1..13 { // 13 fields
+
+        for _n in 1..13 {
+            // 13 fields
             let s = self.read_line()?;
             log::debug!("{}", s);
             let field = IntField::from_str(s.as_str())?;
@@ -379,7 +403,7 @@ impl NeatoRobot for DSeries <'_> {
                 "SideBrush_mA" => status.side_brush_ma = field.value,
                 _ => log::error!("Unrecognized field: {:?}", field),
             }
-        };
+        }
         log::debug!("Got motors");
         Ok(status)
     }
