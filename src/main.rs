@@ -3,17 +3,34 @@ use std::{env, thread, time};
 use neato_driver::{DSeries, NeatoRobot, Toggle};
 use serialport::SerialPortSettings;
 
+use clap::{Arg, App};
+
 fn main() {
-    let args: Vec<String> = env::args().collect();
-    println!("{:?}", args);
-    let port = &args[1];
+    let matches = App::new("Neato driver test application")
+                          .author("Loy van Beek <loy.vanbeek@mail.com>")
+                          .about("Controls a Neato vacum robot over it's serial port")
+                          .arg(Arg::with_name("device")
+                               .short("d")
+                               .long("device")
+                               .help("Serial port device to use")
+                               .default_value("/dev/ttyACM0")
+                               .takes_value(true))
+                          .arg(Arg::with_name("baudrate")
+                               .help("Baud-rate with which to communicate over the serial port")
+                               .short("b")
+                               .long("baudrate")
+                               .default_value("115200"))
+                          .get_matches();
+
+    let port = matches.value_of("device").unwrap();
+    let baudrate: u32 = matches.value_of("baudrate").unwrap_or("115200").parse::<u32>().unwrap();
 
     env_logger::init();
 
     println!("Hello robot on port {}!", port);
 
     let s = SerialPortSettings {
-        baud_rate: 115200,
+        baud_rate: baudrate,
         timeout: time::Duration::from_secs(1),
 
         ..Default::default()
