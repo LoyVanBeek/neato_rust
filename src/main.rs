@@ -1,29 +1,37 @@
-use std::{env, thread, time};
+use std::{thread, time};
 
 use neato_driver::{DSeries, NeatoRobot, Toggle};
 use serialport::SerialPortSettings;
 
-use clap::{Arg, App};
+use clap::{App, Arg};
 
 fn main() {
     let matches = App::new("Neato driver test application")
-                          .author("Loy van Beek <loy.vanbeek@mail.com>")
-                          .about("Controls a Neato vacum robot over it's serial port")
-                          .arg(Arg::with_name("device")
-                               .short("d")
-                               .long("device")
-                               .help("Serial port device to use")
-                               .default_value("/dev/ttyACM0")
-                               .takes_value(true))
-                          .arg(Arg::with_name("baudrate")
-                               .help("Baud-rate with which to communicate over the serial port")
-                               .short("b")
-                               .long("baudrate")
-                               .default_value("115200"))
-                          .get_matches();
+        .author("Loy van Beek <loy.vanbeek@mail.com>")
+        .about("Controls a Neato vacum robot over it's serial port")
+        .arg(
+            Arg::with_name("device")
+                .short("d")
+                .long("device")
+                .help("Serial port device to use")
+                .default_value("/dev/ttyACM0")
+                .takes_value(true),
+        )
+        .arg(
+            Arg::with_name("baudrate")
+                .help("Baud-rate with which to communicate over the serial port")
+                .short("b")
+                .long("baudrate")
+                .default_value("115200"),
+        )
+        .get_matches();
 
     let port = matches.value_of("device").unwrap();
-    let baudrate: u32 = matches.value_of("baudrate").unwrap_or("115200").parse::<u32>().unwrap();
+    let baudrate: u32 = matches
+        .value_of("baudrate")
+        .unwrap_or("115200")
+        .parse::<u32>()
+        .unwrap();
 
     env_logger::init();
 
@@ -71,10 +79,14 @@ fn main() {
     let motor_status = robot.get_motors().expect("Could not get motor data");
     println!("{:?}", motor_status);
 
-    let analog_status = robot.get_analog_sensors().expect("Could not get analog sensors");
+    let analog_status = robot
+        .get_analog_sensors()
+        .expect("Could not get analog sensors");
     println!("{:?}", analog_status);
 
-    let digital_status = robot.get_digital_sensors().expect("Could not get digital sensors");
+    let digital_status = robot
+        .get_digital_sensors()
+        .expect("Could not get digital sensors");
     println!("{:?}", digital_status);
 
     let charger_status = robot.get_charger().expect("Could not get charger status");
