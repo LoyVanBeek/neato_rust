@@ -1,4 +1,4 @@
-use std::{io, num::ParseFloatError, num::ParseIntError, str::FromStr, thread, time, fmt::Display};
+use std::{fmt::Display, io, num::ParseFloatError, num::ParseIntError, str::FromStr, thread, time};
 
 use io::Write;
 use serialport::SerialPort;
@@ -122,7 +122,14 @@ pub struct DSeries<'a> {
 
 impl Display for DSeries<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "({:?}, {:?}, {:?}, {:?})", self.motor_status, self.analog_sensor_status, self.digital_sensor_status, self.charger_status)
+        write!(
+            f,
+            "({:?}, {:?}, {:?}, {:?})",
+            self.motor_status,
+            self.analog_sensor_status,
+            self.digital_sensor_status,
+            self.charger_status
+        )
     }
 }
 
@@ -130,10 +137,18 @@ impl DSeries<'_> {
     pub fn new(serial_port: Box<dyn SerialPort>) -> Self {
         Self {
             serial_port: serial_port,
-            motor_status: MotorStatus{..Default::default()},
-            analog_sensor_status: AnalogSensorStatus{..Default::default()},
-            digital_sensor_status: DigitalSensorStatus{..Default::default()},
-            charger_status: ChargerStatus{..Default::default()},
+            motor_status: MotorStatus {
+                ..Default::default()
+            },
+            analog_sensor_status: AnalogSensorStatus {
+                ..Default::default()
+            },
+            digital_sensor_status: DigitalSensorStatus {
+                ..Default::default()
+            },
+            charger_status: ChargerStatus {
+                ..Default::default()
+            },
         }
     }
 }
@@ -608,7 +623,7 @@ impl NeatoRobot for DSeries<'_> {
             // 15 fields
             let s = self.read_line()?;
             log::debug!("{}", s);
-            let _ = match IntField::from_str(s.as_str()){
+            let _ = match IntField::from_str(s.as_str()) {
                 Ok(field) => {
                     log::debug!("{:?}", field);
                     match field.name.as_str() {
@@ -628,8 +643,8 @@ impl NeatoRobot for DSeries<'_> {
                         _ => log::error!("Unrecognized field: {:?}", field),
                     }
                 }
-                Err(ParseIntError) => {
-                    let _ = match SimpleFloatField::from_str(s.as_str()){
+                Err(_parse_int_error) => {
+                    let _ = match SimpleFloatField::from_str(s.as_str()) {
                         Ok(field) => {
                             log::debug!("{:?}", field);
                             match field.name.as_str() {
@@ -638,13 +653,11 @@ impl NeatoRobot for DSeries<'_> {
                                 _ => log::error!("Unrecognized field: {:?}", field),
                             }
                         }
-                        Err(err) => {
-                            return Err(GetDataError::ParseFloatData(err))
-                        },
+                        Err(err) => return Err(GetDataError::ParseFloatData(err)),
                     };
                 }
             };
-        };
+        }
         self.charger_status = status;
         log::debug!("Got charger");
         Ok(status)
