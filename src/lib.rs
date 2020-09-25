@@ -152,6 +152,41 @@ pub struct DigitalSensorStatus {
     right_ldsbit: bool,
 }
 
+impl FromStr for DigitalSensorStatus {
+    type Err = ParseIntError;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let lines: Vec<&str> = s.split('\n').collect();
+
+        let mut status = DigitalSensorStatus {
+            ..Default::default()
+        }; 
+
+        for line in lines {
+            log::debug!("line: {}", line);
+            if !line.is_empty(){
+                let field = BoolField::from_str(line)?;
+                log::debug!("{:?}", field);
+                match field.name.as_str() {
+                    "SNSR_DC_JACK_IS_IN" => status.sensor_dc_jack_is_in = field.value,
+                    "SNSR_DUSTBIN_IS_IN" => status.sensor_dustbin_is_in = field.value,
+                    "SNSR_LEFT_WHEEL_EXTENDED" => status.sensor_left_wheel_extended = field.value,
+                    "SNSR_RIGHT_WHEEL_EXTENDED" => status.sensor_right_wheel_extended = field.value,
+                    "LSIDEBIT" => status.left_sidebit = field.value,
+                    "LFRONTBIT" => status.left_frontbit = field.value,
+                    "LLDSBIT" => status.left_ldsbit = field.value,
+                    "RSIDEBIT" => status.right_sidebit = field.value,
+                    "RFRONTBIT" => status.right_frontbit = field.value,
+                    "RLDSBIT" => status.right_ldsbit = field.value,
+                    _ => log::error!("Unrecognized field: {:?}", field),
+                }
+            }
+        }
+
+        Ok(status)
+    }
+}
+
 #[derive(Debug, Default, Clone, Copy)]
 pub struct ChargerStatus {
     fuel_percent: i32,
@@ -614,11 +649,7 @@ impl NeatoRobot for DSeries<'_> {
         self.serial_port.flush()?;
 
         log::debug!("Serial port flushed");
-
-        let mut status = DigitalSensorStatus {
-            ..Default::default()
-        };
-
+        
         log::debug!("Reading values...");
         loop {
             let header = self.read_line()?;
@@ -629,26 +660,8 @@ impl NeatoRobot for DSeries<'_> {
             }
         }
 
-        for _n in 1..10 {
-            // 10 fields
-            let s = self.read_line()?;
-            log::debug!("{}", s);
-            let field = BoolField::from_str(s.as_str())?;
-            log::debug!("{:?}", field);
-            match field.name.as_str() {
-                "SNSR_DC_JACK_IS_IN" => status.sensor_dc_jack_is_in = field.value,
-                "SNSR_DUSTBIN_IS_IN" => status.sensor_dustbin_is_in = field.value,
-                "SNSR_LEFT_WHEEL_EXTENDED" => status.sensor_left_wheel_extended = field.value,
-                "SNSR_RIGHT_WHEEL_EXTENDED" => status.sensor_right_wheel_extended = field.value,
-                "LSIDEBIT" => status.left_sidebit = field.value,
-                "LFRONTBIT" => status.left_frontbit = field.value,
-                "LLDSBIT" => status.left_ldsbit = field.value,
-                "RSIDEBIT" => status.right_sidebit = field.value,
-                "RFRONTBIT" => status.right_frontbit = field.value,
-                "RLDSBIT" => status.right_ldsbit = field.value,
-                _ => log::error!("Unrecognized field: {:?}", field),
-            }
-        }
+        let lines = self.read_lines(10)?;
+        let status = DigitalSensorStatus::from_str(&lines)?;
         self.digital_sensor_status = status;
         log::debug!("Got digital_sensors");
         Ok(status)
