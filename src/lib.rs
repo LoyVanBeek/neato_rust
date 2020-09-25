@@ -99,6 +99,45 @@ pub struct AnalogSensorStatus {
     drop_sensor_right: f32,
 }
 
+impl FromStr for AnalogSensorStatus {
+    type Err = ParseFloatError;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let lines: Vec<&str> = s.split('\n').collect();
+
+        let mut status = AnalogSensorStatus {
+            ..Default::default()
+        }; 
+
+        for line in lines {
+            log::debug!("line: {}", line);
+            if !line.is_empty(){
+                let field = UnitFloatField::from_str(line)?;
+                log::debug!("{:?}", field);
+                match field.name.as_str() {
+                    "BatteryVoltage" => status.battery_voltage = field.value,
+                    "BatteryCurrent" => status.battery_current = field.value,
+                    "BatteryTemperature" => status.battery_temperature = field.value,
+                    "ExternalVoltage" => status.external_voltage = field.value,
+                    "AccelerometerX" => status.accelerometer_x = field.value,
+                    "AccelerometerY" => status.accelerometer_y = field.value,
+                    "AccelerometerZ" => status.accelerometer_z = field.value,
+                    "VacuumCurrent" => status.vacuum_current = field.value,
+                    "SideBrushCurrent" => status.side_brush_current = field.value,
+                    "MagSensorLeft" => status.mag_sensor_left = field.value,
+                    "MagSensorRight" => status.mag_sensor_right = field.value,
+                    "WallSensor" => status.wall_sensor = field.value,
+                    "DropSensorLeft" => status.drop_sensor_left = field.value,
+                    "DropSensorRight" => status.drop_sensor_right = field.value,
+                    _ => log::error!("Unrecognized field: {:?}", field),
+                }
+            }
+        }
+
+        Ok(status)
+    }
+}
+
 #[derive(Debug, Default, Clone, Copy)]
 pub struct DigitalSensorStatus {
     sensor_dc_jack_is_in: bool,
@@ -543,10 +582,6 @@ impl NeatoRobot for DSeries<'_> {
 
         log::debug!("Serial port flushed");
 
-        let mut status = AnalogSensorStatus {
-            ..Default::default()
-        };
-
         log::debug!("Reading values...");
         loop {
             let header = self.read_line()?;
@@ -557,30 +592,10 @@ impl NeatoRobot for DSeries<'_> {
             }
         }
 
-        for _n in 1..14 {
-            // 13 fields
-            let s = self.read_line()?;
-            log::debug!("{}", s);
-            let field = UnitFloatField::from_str(s.as_str())?;
-            log::debug!("{:?}", field);
-            match field.name.as_str() {
-                "BatteryVoltage" => status.battery_voltage = field.value,
-                "BatteryCurrent" => status.battery_current = field.value,
-                "BatteryTemperature" => status.battery_temperature = field.value,
-                "ExternalVoltage" => status.external_voltage = field.value,
-                "AccelerometerX" => status.accelerometer_x = field.value,
-                "AccelerometerY" => status.accelerometer_y = field.value,
-                "AccelerometerZ" => status.accelerometer_z = field.value,
-                "VacuumCurrent" => status.vacuum_current = field.value,
-                "SideBrushCurrent" => status.side_brush_current = field.value,
-                "MagSensorLeft" => status.mag_sensor_left = field.value,
-                "MagSensorRight" => status.mag_sensor_right = field.value,
-                "WallSensor" => status.wall_sensor = field.value,
-                "DropSensorLeft" => status.drop_sensor_left = field.value,
-                "DropSensorRight" => status.drop_sensor_right = field.value,
-                _ => log::error!("Unrecognized field: {:?}", field),
-            }
-        }
+        let lines = self.read_lines(14)?;
+        log::debug!("Got {} lines", lines);
+        let status = AnalogSensorStatus::from_str(&lines)?;
+
         self.analog_sensor_status = status;
         log::debug!("Got analog_sensors");
         Ok(status)
