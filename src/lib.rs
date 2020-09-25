@@ -116,6 +116,7 @@ pub trait NeatoRobot {
     fn set_backlight(&mut self, value: Toggle) -> Result<()>;
 
     fn read_line(&mut self) -> Result<String>;
+    fn read_lines(&mut self, line_count: i32) -> Result<Vec<String>>;
 }
 
 pub struct DSeries<'a> {
@@ -375,6 +376,29 @@ impl NeatoRobot for DSeries<'_> {
 
         let s = String::from_utf8(longbuffer)?;
         return Ok(s);
+    }
+
+    fn read_lines(&mut self, line_count: i32) -> Result<Vec<String>> {
+        let mut lines = vec![];
+
+        for _l in 1..line_count {
+            let mut longbuffer = vec![];
+
+            for _n in 1..100 {
+                let mut buffer = [0; 1];
+                let _n = self.serial_port.read(&mut buffer)?;
+                // println!("buffer: {}, {:?}", n, &buffer[..n]);
+                let ch = buffer[0];
+                if ch as char == '\n' {
+                    break;
+                }
+                longbuffer.push(ch);
+            }
+
+            let s = String::from_utf8(longbuffer)?;
+            lines.push(s);
+        }
+        Ok(lines)
     }
 
     fn get_scan_ranges(&mut self) -> Result<Vec<f32>> {
