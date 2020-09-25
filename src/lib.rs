@@ -206,6 +206,58 @@ pub struct ChargerStatus {
     discharge_mah: i32,
 }
 
+
+impl FromStr for ChargerStatus {
+    type Err = ParseNumberError;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let lines: Vec<&str> = s.split('\n').collect();
+
+        let mut status = ChargerStatus {
+            ..Default::default()
+        }; 
+
+        for line in lines {
+            log::debug!("line: {}", line);
+            if !line.is_empty(){
+                let _ = match IntField::from_str(&line) {
+                    Ok(field) => {
+                        log::debug!("{:?}", field);
+                        match field.name.as_str() {
+                            "FuelPercent" => status.fuel_percent = field.value,
+                            "BatteryOverTemp" => status.battery_over_tmp = field.value,
+                            "ChargingActive" => status.charging_active = field.value,
+                            "ChargingEnabled" => status.charging_enabled = field.value,
+                            "ConfidentOnFuel" => status.confident_on_fuel = field.value,
+                            "OnReservedFuel" => status.on_reserved_fuel = field.value,
+                            "EmptyFuel" => status.empty_fuel = field.value,
+                            "BatteryFailure" => status.battery_failure = field.value,
+                            "ExtPwrPresent" => status.ext_pwr_present = field.value,
+                            "ThermistorPresent" => status.thermistor_present = field.value,
+                            "BattTempCAvg" => status.batt_temp_c_avg = field.value,
+                            "Charger_mAH" => status.charger_mah = field.value,
+                            "Discharge_mAH" => status.discharge_mah = field.value,
+                            _ => log::error!("Unrecognized field: {:?}", field),
+                        }
+                    }
+                    Err(_parse_int_error) => {
+                        let _ = match SimpleFloatField::from_str(&line) {
+                            Ok(field) => match field.name.as_str() {
+                                "VBattV" => status.v_batt_v_v = field.value,
+                                "VExtV" => status.v_ext_v = field.value,
+                                _ => log::error!("Unrecognized field: {:?}", field),
+                            }
+                            Err(err) => return Err(ParseNumberError::ParseFloat(err))
+                        };
+                    }
+                };
+            };
+        }
+
+        Ok(status)
+    }
+}
+
 pub trait NeatoRobot {
     fn exit(&mut self) -> Result<()>;
     fn set_testmode(&mut self, value: Toggle) -> Result<()>;
@@ -681,10 +733,6 @@ impl NeatoRobot for DSeries<'_> {
 
         log::debug!("Serial port flushed");
 
-        let mut status = ChargerStatus {
-            ..Default::default()
-        };
-
         log::debug!("Reading values...");
         loop {
             let header = self.read_line()?;
@@ -695,40 +743,8 @@ impl NeatoRobot for DSeries<'_> {
             }
         }
 
-        for _n in 1..15 {
-            // 15 fields
-            let s = self.read_line()?;
-            log::debug!("{}", s);
-            let _ = match IntField::from_str(s.as_str()) {
-                Ok(field) => {
-                    log::debug!("{:?}", field);
-                    match field.name.as_str() {
-                        "FuelPercent" => status.fuel_percent = field.value,
-                        "BatteryOverTemp" => status.battery_over_tmp = field.value,
-                        "ChargingActive" => status.charging_active = field.value,
-                        "ChargingEnabled" => status.charging_enabled = field.value,
-                        "ConfidentOnFuel" => status.confident_on_fuel = field.value,
-                        "OnReservedFuel" => status.on_reserved_fuel = field.value,
-                        "EmptyFuel" => status.empty_fuel = field.value,
-                        "BatteryFailure" => status.battery_failure = field.value,
-                        "ExtPwrPresent" => status.ext_pwr_present = field.value,
-                        "ThermistorPresent" => status.thermistor_present = field.value,
-                        "BattTempCAvg" => status.batt_temp_c_avg = field.value,
-                        "Charger_mAH" => status.charger_mah = field.value,
-                        "Discharge_mAH" => status.discharge_mah = field.value,
-                        _ => log::error!("Unrecognized field: {:?}", field),
-                    }
-                }
-                Err(_parse_int_error) => {
-                    let field = SimpleFloatField::from_str(s.as_str())?;
-                    match field.name.as_str() {
-                        "VBattV" => status.v_batt_v_v = field.value,
-                        "VExtV" => status.v_ext_v = field.value,
-                        _ => log::error!("Unrecognized field: {:?}", field),
-                    }
-                }
-            };
-        };
+        let lines = self.read_lines(16)?;
+        let status = ChargerStatus::from_str(&lines)?;
         self.charger_status = status;
         log::debug!("Got charger");
         Ok(status)
