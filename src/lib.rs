@@ -1,9 +1,13 @@
+use anyhow::Context;
 use std::{fmt::Display, io, num::ParseFloatError, num::ParseIntError, str::FromStr, thread, time};
 
 use io::Write;
 use serialport::SerialPort;
 
 use anyhow::Result;
+
+use thiserror::Error;
+
 
 #[derive(Debug)]
 pub enum Toggle {
@@ -155,17 +159,23 @@ impl DSeries<'_> {
     }
 }
 
-#[derive(Debug)]
+#[derive(Error, Debug)]
 pub enum GetDataError {
+    #[error("Error communicating with the robot")]
     Io(io::Error),
+    #[error("Error parsing bytes to string")]
     Parse(std::string::FromUtf8Error),
+    #[error("Error parsing string to int")]
     ParseIntData(ParseIntError),
+    #[error("Error parsing string to float")]
     ParseFloatData(ParseFloatError),
 }
 
-#[derive(Debug)]
+#[derive(Error, Debug)]
 pub enum ParseNumberError {
+    #[error("Error parsing string to int")]
     ParseInt(ParseIntError),
+    #[error("Error parsing string to float")]
     ParseFloat(ParseFloatError),
 }
 
@@ -291,7 +301,7 @@ impl NeatoRobot for DSeries<'_> {
 
     fn set_testmode(&mut self, value: Toggle) -> Result<()> {
         log::debug!("Setting testmode");
-        writeln!(self.serial_port, "testmode {}", value.to_string())?;
+        writeln!(self.serial_port, "testmode {}", value.to_string()).context("Could not write to serial port")?;
 
         loop {
             let s = match self.read_line() {

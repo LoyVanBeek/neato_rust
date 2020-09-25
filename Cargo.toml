@@ -12,3 +12,4 @@ clap = "2.33.3"
 env_logger = "0.7.1"
 log = "0.4.11"
 serialport = { version = "3.3.0", optional = false }  # udev is causing issues with CI and happens to be optional
+thiserror = "1.0"
