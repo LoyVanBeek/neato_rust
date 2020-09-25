@@ -8,7 +8,6 @@ use anyhow::Result;
 
 use thiserror::Error;
 
-
 #[derive(Debug)]
 pub enum Toggle {
     On,
@@ -45,7 +44,7 @@ pub struct MotorStatus {
 impl FromStr for MotorStatus {
     // add code here
     type Err = ParseIntError;
-    
+
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let lines: Vec<&str> = s.split('\n').collect();
 
@@ -55,7 +54,7 @@ impl FromStr for MotorStatus {
 
         for line in lines {
             log::debug!("line: {}", line);
-            if !line.is_empty(){
+            if !line.is_empty() {
                 let field = IntField::from_str(line)?;
                 log::debug!("field: {:?}", field);
                 match field.name.as_str() {
@@ -107,11 +106,11 @@ impl FromStr for AnalogSensorStatus {
 
         let mut status = AnalogSensorStatus {
             ..Default::default()
-        }; 
+        };
 
         for line in lines {
             log::debug!("line: {}", line);
-            if !line.is_empty(){
+            if !line.is_empty() {
                 let field = UnitFloatField::from_str(line)?;
                 log::debug!("{:?}", field);
                 match field.name.as_str() {
@@ -160,11 +159,11 @@ impl FromStr for DigitalSensorStatus {
 
         let mut status = DigitalSensorStatus {
             ..Default::default()
-        }; 
+        };
 
         for line in lines {
             log::debug!("line: {}", line);
-            if !line.is_empty(){
+            if !line.is_empty() {
                 let field = BoolField::from_str(line)?;
                 log::debug!("{:?}", field);
                 match field.name.as_str() {
@@ -206,7 +205,6 @@ pub struct ChargerStatus {
     discharge_mah: i32,
 }
 
-
 impl FromStr for ChargerStatus {
     type Err = ParseNumberError;
 
@@ -215,11 +213,11 @@ impl FromStr for ChargerStatus {
 
         let mut status = ChargerStatus {
             ..Default::default()
-        }; 
+        };
 
         for line in lines {
             log::debug!("line: {}", line);
-            if !line.is_empty(){
+            if !line.is_empty() {
                 let _ = match IntField::from_str(&line) {
                     Ok(field) => {
                         log::debug!("{:?}", field);
@@ -246,8 +244,8 @@ impl FromStr for ChargerStatus {
                                 "VBattV" => status.v_batt_v_v = field.value,
                                 "VExtV" => status.v_ext_v = field.value,
                                 _ => log::error!("Unrecognized field: {:?}", field),
-                            }
-                            Err(err) => return Err(ParseNumberError::ParseFloat(err))
+                            },
+                            Err(err) => return Err(ParseNumberError::ParseFloat(err)),
                         };
                     }
                 };
@@ -266,12 +264,7 @@ pub trait NeatoRobot {
     fn request_scan(&mut self) -> Result<()>;
     fn get_scan_ranges(&mut self) -> Result<Vec<f32>>;
 
-    fn set_motors(
-        &mut self,
-        left_distance: i32,
-        right_distance: i32,
-        speed: i32,
-    ) -> Result<()>;
+    fn set_motors(&mut self, left_distance: i32, right_distance: i32, speed: i32) -> Result<()>;
     fn get_motors(&mut self) -> Result<MotorStatus>;
 
     fn get_analog_sensors(&mut self) -> Result<AnalogSensorStatus>;
@@ -362,6 +355,7 @@ impl From<ParseIntError> for GetDataError {
         GetDataError::ParseIntData(err)
     }
 }
+
 impl From<ParseFloatError> for GetDataError {
     fn from(err: ParseFloatError) -> GetDataError {
         GetDataError::ParseFloatData(err)
@@ -468,7 +462,8 @@ impl NeatoRobot for DSeries<'_> {
 
     fn set_testmode(&mut self, value: Toggle) -> Result<()> {
         log::debug!("Setting testmode");
-        writeln!(self.serial_port, "testmode {}", value.to_string()).context("Could not write to serial port")?;
+        writeln!(self.serial_port, "testmode {}", value.to_string())
+            .context("Could not write to serial port")?;
 
         loop {
             let s = match self.read_line() {
@@ -593,12 +588,7 @@ impl NeatoRobot for DSeries<'_> {
         Ok(ranges)
     }
 
-    fn set_motors(
-        &mut self,
-        left_distance: i32,
-        right_distance: i32,
-        speed: i32,
-    ) -> Result<()> {
+    fn set_motors(&mut self, left_distance: i32, right_distance: i32, speed: i32) -> Result<()> {
         log::debug!(
             "set_motors({}, {}, {})",
             left_distance,
@@ -649,7 +639,7 @@ impl NeatoRobot for DSeries<'_> {
         let lines = self.read_lines(13)?;
         log::debug!("Got {} lines", lines);
         let status = MotorStatus::from_str(&lines)?;
-        
+
         self.motor_status = status;
         log::debug!("Got motors");
         Ok(status)
@@ -701,7 +691,7 @@ impl NeatoRobot for DSeries<'_> {
         self.serial_port.flush()?;
 
         log::debug!("Serial port flushed");
-        
+
         log::debug!("Reading values...");
         loop {
             let header = self.read_line()?;
