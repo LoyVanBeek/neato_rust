@@ -42,6 +42,45 @@ pub struct MotorStatus {
     side_brush_ma: i32,
 }
 
+impl FromStr for MotorStatus {
+    // add code here
+    type Err = ParseIntError;
+    
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let lines: Vec<&str> = s.split('\n').collect();
+
+        let mut status = MotorStatus {
+            ..Default::default()
+        };
+
+        for line in lines {
+            log::debug!("line: {}", line);
+            if !line.is_empty(){
+                let field = IntField::from_str(line)?;
+                log::debug!("field: {:?}", field);
+                match field.name.as_str() {
+                    "Brush_RPM" => status.brush_rpm = field.value,
+                    "Brush_mA" => status.brush_ma = field.value,
+                    "Vacuum_RPM" => status.vacuum_rpm = field.value,
+                    "Vacuum_mA" => status.vacuum_ma = field.value,
+                    "LeftWheel_RPM" => status.left_wheel_rpm = field.value,
+                    "LeftWheel_Load%" => status.left_wheel_load = field.value,
+                    "LeftWheel_PositionInMM" => status.left_wheel_position_in_mm = field.value,
+                    "LeftWheel_Speed" => status.left_wheel_speed = field.value,
+                    "RightWheel_RPM" => status.right_wheel_rpm = field.value,
+                    "RightWheel_Load%" => status.right_wheel_load = field.value,
+                    "RightWheel_PositionInMM" => status.right_wheel_position_in_mm = field.value,
+                    "RightWheel_Speed" => status.right_wheel_speed = field.value,
+                    "SideBrush_mA" => status.side_brush_ma = field.value,
+                    _ => log::error!("Unrecognized field: {:?}", field),
+                }
+            }
+        }
+
+        Ok(status)
+    }
+}
+
 #[derive(Debug, Default, Clone, Copy)]
 pub struct AnalogSensorStatus {
     battery_voltage: f32,
@@ -292,6 +331,7 @@ impl FromStr for SimpleFloatField {
         })
     }
 }
+
 impl NeatoRobot for DSeries<'_> {
     fn exit(&mut self) -> Result<()> {
         self.set_ldsrotation(Toggle::Off)?;
@@ -387,7 +427,6 @@ impl NeatoRobot for DSeries<'_> {
             for _n in 1..100 {
                 let mut buffer = [0; 1];
                 let _n = self.serial_port.read(&mut buffer)?;
-                // println!("buffer: {}, {:?}", n, &buffer[..n]);
                 let ch = buffer[0];
                 longbuffer.push(ch);
                 if ch as char == '\n' {
@@ -471,10 +510,6 @@ impl NeatoRobot for DSeries<'_> {
 
         log::debug!("Serial port flushed");
 
-        let mut status = MotorStatus {
-            ..Default::default()
-        };
-
         log::debug!("Reading values...");
         loop {
             let header = self.read_line()?;
@@ -485,29 +520,10 @@ impl NeatoRobot for DSeries<'_> {
             }
         }
 
-        for _n in 1..13 {
-            // 13 fields
-            let s = self.read_line()?;
-            log::debug!("{}", s);
-            let field = IntField::from_str(s.as_str())?;
-            log::debug!("{:?}", field);
-            match field.name.as_str() {
-                "Brush_RPM" => status.brush_rpm = field.value,
-                "Brush_mA" => status.brush_ma = field.value,
-                "Vacuum_RPM" => status.vacuum_rpm = field.value,
-                "Vacuum_mA" => status.vacuum_ma = field.value,
-                "LeftWheel_RPM" => status.left_wheel_rpm = field.value,
-                "LeftWheel_Load%" => status.left_wheel_load = field.value,
-                "LeftWheel_PositionInMM" => status.left_wheel_position_in_mm = field.value,
-                "LeftWheel_Speed" => status.left_wheel_speed = field.value,
-                "RightWheel_RPM" => status.right_wheel_rpm = field.value,
-                "RightWheel_Load%" => status.right_wheel_load = field.value,
-                "RightWheel_PositionInMM" => status.right_wheel_position_in_mm = field.value,
-                "RightWheel_Speed" => status.right_wheel_speed = field.value,
-                "SideBrush_mA" => status.side_brush_ma = field.value,
-                _ => log::error!("Unrecognized field: {:?}", field),
-            }
-        }
+        let lines = self.read_lines(13)?;
+        log::debug!("Got {} lines", lines);
+        let status = MotorStatus::from_str(&lines)?;
+        
         self.motor_status = status;
         log::debug!("Got motors");
         Ok(status)
