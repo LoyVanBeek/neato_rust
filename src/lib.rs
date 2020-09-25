@@ -3,6 +3,8 @@ use std::{fmt::Display, io, num::ParseFloatError, num::ParseIntError, str::FromS
 use io::Write;
 use serialport::SerialPort;
 
+use anyhow::Result;
+
 #[derive(Debug)]
 pub enum Toggle {
     On,
@@ -88,28 +90,28 @@ pub struct ChargerStatus {
 }
 
 pub trait NeatoRobot {
-    fn exit(&mut self) -> std::io::Result<()>;
-    fn set_testmode(&mut self, value: Toggle) -> std::io::Result<()>;
-    fn set_ldsrotation(&mut self, value: Toggle) -> std::io::Result<()>;
+    fn exit(&mut self) -> Result<()>;
+    fn set_testmode(&mut self, value: Toggle) -> Result<()>;
+    fn set_ldsrotation(&mut self, value: Toggle) -> Result<()>;
 
-    fn request_scan(&mut self) -> std::io::Result<()>;
-    fn get_scan_ranges(&mut self) -> Result<Vec<f32>, GetDataError>;
+    fn request_scan(&mut self) -> Result<()>;
+    fn get_scan_ranges(&mut self) -> Result<Vec<f32>>;
 
     fn set_motors(
         &mut self,
         left_distance: i32,
         right_distance: i32,
         speed: i32,
-    ) -> std::io::Result<()>;
-    fn get_motors(&mut self) -> Result<MotorStatus, GetDataError>;
+    ) -> Result<()>;
+    fn get_motors(&mut self) -> Result<MotorStatus>;
 
-    fn get_analog_sensors(&mut self) -> Result<AnalogSensorStatus, GetDataError>;
-    fn get_digital_sensors(&mut self) -> Result<DigitalSensorStatus, GetDataError>;
-    fn get_charger(&mut self) -> Result<ChargerStatus, GetDataError>;
+    fn get_analog_sensors(&mut self) -> Result<AnalogSensorStatus>;
+    fn get_digital_sensors(&mut self) -> Result<DigitalSensorStatus>;
+    fn get_charger(&mut self) -> Result<ChargerStatus>;
 
-    fn set_backlight(&mut self, value: Toggle) -> std::io::Result<()>;
+    fn set_backlight(&mut self, value: Toggle) -> Result<()>;
 
-    fn read_line(&mut self) -> Result<String, GetDataError>;
+    fn read_line(&mut self) -> Result<String>;
 }
 
 pub struct DSeries<'a> {
@@ -280,14 +282,14 @@ impl FromStr for SimpleFloatField {
     }
 }
 impl NeatoRobot for DSeries<'_> {
-    fn exit(&mut self) -> std::io::Result<()> {
+    fn exit(&mut self) -> Result<()> {
         self.set_ldsrotation(Toggle::Off)?;
         self.set_testmode(Toggle::Off)?;
         // self.serial_port.flush()?;
         Ok(())
     }
 
-    fn set_testmode(&mut self, value: Toggle) -> std::io::Result<()> {
+    fn set_testmode(&mut self, value: Toggle) -> Result<()> {
         log::debug!("Setting testmode");
         writeln!(self.serial_port, "testmode {}", value.to_string())?;
 
@@ -315,7 +317,7 @@ impl NeatoRobot for DSeries<'_> {
         Ok(())
     }
 
-    fn set_ldsrotation(&mut self, value: Toggle) -> std::io::Result<()> {
+    fn set_ldsrotation(&mut self, value: Toggle) -> Result<()> {
         log::debug!("Setting ldsrotation");
         writeln!(self.serial_port, "setldsrotation {}", value.to_string())?;
 
@@ -331,7 +333,7 @@ impl NeatoRobot for DSeries<'_> {
         Ok(())
     }
 
-    fn request_scan(&mut self) -> std::io::Result<()> {
+    fn request_scan(&mut self) -> Result<()> {
         log::debug!("Requesting scan");
         writeln!(self.serial_port, "getldsscan")?;
 
@@ -347,7 +349,7 @@ impl NeatoRobot for DSeries<'_> {
         Ok(())
     }
 
-    fn read_line(&mut self) -> Result<String, GetDataError> {
+    fn read_line(&mut self) -> Result<String> {
         let mut longbuffer = vec![];
 
         for _n in 1..100 {
@@ -365,7 +367,7 @@ impl NeatoRobot for DSeries<'_> {
         return Ok(s);
     }
 
-    fn get_scan_ranges(&mut self) -> Result<Vec<f32>, GetDataError> {
+    fn get_scan_ranges(&mut self) -> Result<Vec<f32>> {
         log::debug!("Reading serial_port for scan_ranges");
 
         let mut ranges = vec![];
@@ -380,13 +382,8 @@ impl NeatoRobot for DSeries<'_> {
                 let range_str = vec.get(1);
                 match range_str {
                     Some(range_data) => {
-                        match range_data.parse::<i32>() {
-                            Ok(range) => ranges.push((range as f32) / 1000.0), // millimeters to meters
-                            Err(err) => {
-                                println!("Could not parse {}", s);
-                                return Err(GetDataError::ParseIntData(err));
-                            }
-                        };
+                        let range = range_data.parse::<i32>()?;
+                        ranges.push((range as f32) / 1000.0); // millimeters to meters
                     }
                     None => println!("Could not get element from {}", s),
                 };
@@ -401,7 +398,7 @@ impl NeatoRobot for DSeries<'_> {
         left_distance: i32,
         right_distance: i32,
         speed: i32,
-    ) -> std::io::Result<()> {
+    ) -> Result<()> {
         log::debug!(
             "set_motors({}, {}, {})",
             left_distance,
@@ -425,7 +422,7 @@ impl NeatoRobot for DSeries<'_> {
         Ok(())
     }
 
-    fn get_motors(&mut self) -> Result<MotorStatus, GetDataError> {
+    fn get_motors(&mut self) -> Result<MotorStatus> {
         log::debug!("get_motors");
 
         writeln!(self.serial_port, "getmotors\n")?;
@@ -481,7 +478,7 @@ impl NeatoRobot for DSeries<'_> {
         Ok(status)
     }
 
-    fn get_analog_sensors(&mut self) -> Result<AnalogSensorStatus, GetDataError> {
+    fn get_analog_sensors(&mut self) -> Result<AnalogSensorStatus> {
         log::debug!("get_analog_sensors");
 
         writeln!(self.serial_port, "getanalogsensors\n")?;
@@ -538,7 +535,7 @@ impl NeatoRobot for DSeries<'_> {
         Ok(status)
     }
 
-    fn get_digital_sensors(&mut self) -> Result<DigitalSensorStatus, GetDataError> {
+    fn get_digital_sensors(&mut self) -> Result<DigitalSensorStatus> {
         log::debug!("get_digital_sensors");
 
         writeln!(self.serial_port, "getdigitalsensors\n")?;
@@ -591,7 +588,7 @@ impl NeatoRobot for DSeries<'_> {
         Ok(status)
     }
 
-    fn get_charger(&mut self) -> Result<ChargerStatus, GetDataError> {
+    fn get_charger(&mut self) -> Result<ChargerStatus> {
         log::debug!("get_charger");
 
         writeln!(self.serial_port, "getcharger\n")?;
@@ -644,26 +641,21 @@ impl NeatoRobot for DSeries<'_> {
                     }
                 }
                 Err(_parse_int_error) => {
-                    let _ = match SimpleFloatField::from_str(s.as_str()) {
-                        Ok(field) => {
-                            log::debug!("{:?}", field);
-                            match field.name.as_str() {
-                                "VBattV" => status.v_batt_v_v = field.value,
-                                "VExtV" => status.v_ext_v = field.value,
-                                _ => log::error!("Unrecognized field: {:?}", field),
-                            }
-                        }
-                        Err(err) => return Err(GetDataError::ParseFloatData(err)),
-                    };
+                    let field = SimpleFloatField::from_str(s.as_str())?;
+                    match field.name.as_str() {
+                        "VBattV" => status.v_batt_v_v = field.value,
+                        "VExtV" => status.v_ext_v = field.value,
+                        _ => log::error!("Unrecognized field: {:?}", field),
+                    }
                 }
             };
-        }
+        };
         self.charger_status = status;
         log::debug!("Got charger");
         Ok(status)
     }
 
-    fn set_backlight(&mut self, value: Toggle) -> std::io::Result<()> {
+    fn set_backlight(&mut self, value: Toggle) -> Result<()> {
         writeln!(self.serial_port, "setled backlight{}", value.to_string())?;
         Ok(())
     }
