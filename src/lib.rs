@@ -8,7 +8,6 @@ use anyhow::Result;
 
 use thiserror::Error;
 
-
 #[derive(Debug)]
 pub enum Toggle {
     On,
@@ -42,6 +41,45 @@ pub struct MotorStatus {
     side_brush_ma: i32,
 }
 
+impl FromStr for MotorStatus {
+    // add code here
+    type Err = ParseIntError;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let lines: Vec<&str> = s.split('\n').collect();
+
+        let mut status = MotorStatus {
+            ..Default::default()
+        };
+
+        for line in lines {
+            log::debug!("line: {}", line);
+            if !line.is_empty() {
+                let field = IntField::from_str(line)?;
+                log::debug!("field: {:?}", field);
+                match field.name.as_str() {
+                    "Brush_RPM" => status.brush_rpm = field.value,
+                    "Brush_mA" => status.brush_ma = field.value,
+                    "Vacuum_RPM" => status.vacuum_rpm = field.value,
+                    "Vacuum_mA" => status.vacuum_ma = field.value,
+                    "LeftWheel_RPM" => status.left_wheel_rpm = field.value,
+                    "LeftWheel_Load%" => status.left_wheel_load = field.value,
+                    "LeftWheel_PositionInMM" => status.left_wheel_position_in_mm = field.value,
+                    "LeftWheel_Speed" => status.left_wheel_speed = field.value,
+                    "RightWheel_RPM" => status.right_wheel_rpm = field.value,
+                    "RightWheel_Load%" => status.right_wheel_load = field.value,
+                    "RightWheel_PositionInMM" => status.right_wheel_position_in_mm = field.value,
+                    "RightWheel_Speed" => status.right_wheel_speed = field.value,
+                    "SideBrush_mA" => status.side_brush_ma = field.value,
+                    _ => log::error!("Unrecognized field: {:?}", field),
+                }
+            }
+        }
+
+        Ok(status)
+    }
+}
+
 #[derive(Debug, Default, Clone, Copy)]
 pub struct AnalogSensorStatus {
     battery_voltage: f32,
@@ -60,6 +98,45 @@ pub struct AnalogSensorStatus {
     drop_sensor_right: f32,
 }
 
+impl FromStr for AnalogSensorStatus {
+    type Err = ParseFloatError;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let lines: Vec<&str> = s.split('\n').collect();
+
+        let mut status = AnalogSensorStatus {
+            ..Default::default()
+        };
+
+        for line in lines {
+            log::debug!("line: {}", line);
+            if !line.is_empty() {
+                let field = UnitFloatField::from_str(line)?;
+                log::debug!("{:?}", field);
+                match field.name.as_str() {
+                    "BatteryVoltage" => status.battery_voltage = field.value,
+                    "BatteryCurrent" => status.battery_current = field.value,
+                    "BatteryTemperature" => status.battery_temperature = field.value,
+                    "ExternalVoltage" => status.external_voltage = field.value,
+                    "AccelerometerX" => status.accelerometer_x = field.value,
+                    "AccelerometerY" => status.accelerometer_y = field.value,
+                    "AccelerometerZ" => status.accelerometer_z = field.value,
+                    "VacuumCurrent" => status.vacuum_current = field.value,
+                    "SideBrushCurrent" => status.side_brush_current = field.value,
+                    "MagSensorLeft" => status.mag_sensor_left = field.value,
+                    "MagSensorRight" => status.mag_sensor_right = field.value,
+                    "WallSensor" => status.wall_sensor = field.value,
+                    "DropSensorLeft" => status.drop_sensor_left = field.value,
+                    "DropSensorRight" => status.drop_sensor_right = field.value,
+                    _ => log::error!("Unrecognized field: {:?}", field),
+                }
+            }
+        }
+
+        Ok(status)
+    }
+}
+
 #[derive(Debug, Default, Clone, Copy)]
 pub struct DigitalSensorStatus {
     sensor_dc_jack_is_in: bool,
@@ -72,6 +149,41 @@ pub struct DigitalSensorStatus {
     right_sidebit: bool,
     right_frontbit: bool,
     right_ldsbit: bool,
+}
+
+impl FromStr for DigitalSensorStatus {
+    type Err = ParseIntError;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let lines: Vec<&str> = s.split('\n').collect();
+
+        let mut status = DigitalSensorStatus {
+            ..Default::default()
+        };
+
+        for line in lines {
+            log::debug!("line: {}", line);
+            if !line.is_empty() {
+                let field = BoolField::from_str(line)?;
+                log::debug!("{:?}", field);
+                match field.name.as_str() {
+                    "SNSR_DC_JACK_IS_IN" => status.sensor_dc_jack_is_in = field.value,
+                    "SNSR_DUSTBIN_IS_IN" => status.sensor_dustbin_is_in = field.value,
+                    "SNSR_LEFT_WHEEL_EXTENDED" => status.sensor_left_wheel_extended = field.value,
+                    "SNSR_RIGHT_WHEEL_EXTENDED" => status.sensor_right_wheel_extended = field.value,
+                    "LSIDEBIT" => status.left_sidebit = field.value,
+                    "LFRONTBIT" => status.left_frontbit = field.value,
+                    "LLDSBIT" => status.left_ldsbit = field.value,
+                    "RSIDEBIT" => status.right_sidebit = field.value,
+                    "RFRONTBIT" => status.right_frontbit = field.value,
+                    "RLDSBIT" => status.right_ldsbit = field.value,
+                    _ => log::error!("Unrecognized field: {:?}", field),
+                }
+            }
+        }
+
+        Ok(status)
+    }
 }
 
 #[derive(Debug, Default, Clone, Copy)]
@@ -93,6 +205,57 @@ pub struct ChargerStatus {
     discharge_mah: i32,
 }
 
+impl FromStr for ChargerStatus {
+    type Err = ParseNumberError;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let lines: Vec<&str> = s.split('\n').collect();
+
+        let mut status = ChargerStatus {
+            ..Default::default()
+        };
+
+        for line in lines {
+            log::debug!("line: {}", line);
+            if !line.is_empty() {
+                let _ = match IntField::from_str(&line) {
+                    Ok(field) => {
+                        log::debug!("{:?}", field);
+                        match field.name.as_str() {
+                            "FuelPercent" => status.fuel_percent = field.value,
+                            "BatteryOverTemp" => status.battery_over_tmp = field.value,
+                            "ChargingActive" => status.charging_active = field.value,
+                            "ChargingEnabled" => status.charging_enabled = field.value,
+                            "ConfidentOnFuel" => status.confident_on_fuel = field.value,
+                            "OnReservedFuel" => status.on_reserved_fuel = field.value,
+                            "EmptyFuel" => status.empty_fuel = field.value,
+                            "BatteryFailure" => status.battery_failure = field.value,
+                            "ExtPwrPresent" => status.ext_pwr_present = field.value,
+                            "ThermistorPresent" => status.thermistor_present = field.value,
+                            "BattTempCAvg" => status.batt_temp_c_avg = field.value,
+                            "Charger_mAH" => status.charger_mah = field.value,
+                            "Discharge_mAH" => status.discharge_mah = field.value,
+                            _ => log::error!("Unrecognized field: {:?}", field),
+                        }
+                    }
+                    Err(_parse_int_error) => {
+                        let _ = match SimpleFloatField::from_str(&line) {
+                            Ok(field) => match field.name.as_str() {
+                                "VBattV" => status.v_batt_v_v = field.value,
+                                "VExtV" => status.v_ext_v = field.value,
+                                _ => log::error!("Unrecognized field: {:?}", field),
+                            },
+                            Err(err) => return Err(ParseNumberError::ParseFloat(err)),
+                        };
+                    }
+                };
+            };
+        }
+
+        Ok(status)
+    }
+}
+
 pub trait NeatoRobot {
     fn exit(&mut self) -> Result<()>;
     fn set_testmode(&mut self, value: Toggle) -> Result<()>;
@@ -101,12 +264,7 @@ pub trait NeatoRobot {
     fn request_scan(&mut self) -> Result<()>;
     fn get_scan_ranges(&mut self) -> Result<Vec<f32>>;
 
-    fn set_motors(
-        &mut self,
-        left_distance: i32,
-        right_distance: i32,
-        speed: i32,
-    ) -> Result<()>;
+    fn set_motors(&mut self, left_distance: i32, right_distance: i32, speed: i32) -> Result<()>;
     fn get_motors(&mut self) -> Result<MotorStatus>;
 
     fn get_analog_sensors(&mut self) -> Result<AnalogSensorStatus>;
@@ -116,6 +274,7 @@ pub trait NeatoRobot {
     fn set_backlight(&mut self, value: Toggle) -> Result<()>;
 
     fn read_line(&mut self) -> Result<String>;
+    fn read_lines(&mut self, line_count: i32) -> Result<String>;
 }
 
 pub struct DSeries<'a> {
@@ -196,6 +355,7 @@ impl From<ParseIntError> for GetDataError {
         GetDataError::ParseIntData(err)
     }
 }
+
 impl From<ParseFloatError> for GetDataError {
     fn from(err: ParseFloatError) -> GetDataError {
         GetDataError::ParseFloatData(err)
@@ -291,6 +451,7 @@ impl FromStr for SimpleFloatField {
         })
     }
 }
+
 impl NeatoRobot for DSeries<'_> {
     fn exit(&mut self) -> Result<()> {
         self.set_ldsrotation(Toggle::Off)?;
@@ -301,7 +462,8 @@ impl NeatoRobot for DSeries<'_> {
 
     fn set_testmode(&mut self, value: Toggle) -> Result<()> {
         log::debug!("Setting testmode");
-        writeln!(self.serial_port, "testmode {}", value.to_string()).context("Could not write to serial port")?;
+        writeln!(self.serial_port, "testmode {}", value.to_string())
+            .context("Could not write to serial port")?;
 
         loop {
             let s = match self.read_line() {
@@ -377,6 +539,29 @@ impl NeatoRobot for DSeries<'_> {
         return Ok(s);
     }
 
+    fn read_lines(&mut self, line_count: i32) -> Result<String> {
+        let mut lines = vec![];
+
+        for _l in 1..line_count {
+            let mut longbuffer = vec![];
+
+            for _n in 1..100 {
+                let mut buffer = [0; 1];
+                let _n = self.serial_port.read(&mut buffer)?;
+                let ch = buffer[0];
+                longbuffer.push(ch);
+                if ch as char == '\n' {
+                    break;
+                }
+            }
+
+            let s = String::from_utf8(longbuffer)?;
+            lines.push(s);
+        }
+        let joined: String = lines.join("");
+        Ok(joined)
+    }
+
     fn get_scan_ranges(&mut self) -> Result<Vec<f32>> {
         log::debug!("Reading serial_port for scan_ranges");
 
@@ -403,12 +588,7 @@ impl NeatoRobot for DSeries<'_> {
         Ok(ranges)
     }
 
-    fn set_motors(
-        &mut self,
-        left_distance: i32,
-        right_distance: i32,
-        speed: i32,
-    ) -> Result<()> {
+    fn set_motors(&mut self, left_distance: i32, right_distance: i32, speed: i32) -> Result<()> {
         log::debug!(
             "set_motors({}, {}, {})",
             left_distance,
@@ -446,10 +626,6 @@ impl NeatoRobot for DSeries<'_> {
 
         log::debug!("Serial port flushed");
 
-        let mut status = MotorStatus {
-            ..Default::default()
-        };
-
         log::debug!("Reading values...");
         loop {
             let header = self.read_line()?;
@@ -460,29 +636,10 @@ impl NeatoRobot for DSeries<'_> {
             }
         }
 
-        for _n in 1..13 {
-            // 13 fields
-            let s = self.read_line()?;
-            log::debug!("{}", s);
-            let field = IntField::from_str(s.as_str())?;
-            log::debug!("{:?}", field);
-            match field.name.as_str() {
-                "Brush_RPM" => status.brush_rpm = field.value,
-                "Brush_mA" => status.brush_ma = field.value,
-                "Vacuum_RPM" => status.vacuum_rpm = field.value,
-                "Vacuum_mA" => status.vacuum_ma = field.value,
-                "LeftWheel_RPM" => status.left_wheel_rpm = field.value,
-                "LeftWheel_Load%" => status.left_wheel_load = field.value,
-                "LeftWheel_PositionInMM" => status.left_wheel_position_in_mm = field.value,
-                "LeftWheel_Speed" => status.left_wheel_speed = field.value,
-                "RightWheel_RPM" => status.right_wheel_rpm = field.value,
-                "RightWheel_Load%" => status.right_wheel_load = field.value,
-                "RightWheel_PositionInMM" => status.right_wheel_position_in_mm = field.value,
-                "RightWheel_Speed" => status.right_wheel_speed = field.value,
-                "SideBrush_mA" => status.side_brush_ma = field.value,
-                _ => log::error!("Unrecognized field: {:?}", field),
-            }
-        }
+        let lines = self.read_lines(13)?;
+        log::debug!("Got {} lines", lines);
+        let status = MotorStatus::from_str(&lines)?;
+
         self.motor_status = status;
         log::debug!("Got motors");
         Ok(status)
@@ -502,10 +659,6 @@ impl NeatoRobot for DSeries<'_> {
 
         log::debug!("Serial port flushed");
 
-        let mut status = AnalogSensorStatus {
-            ..Default::default()
-        };
-
         log::debug!("Reading values...");
         loop {
             let header = self.read_line()?;
@@ -516,30 +669,10 @@ impl NeatoRobot for DSeries<'_> {
             }
         }
 
-        for _n in 1..14 {
-            // 13 fields
-            let s = self.read_line()?;
-            log::debug!("{}", s);
-            let field = UnitFloatField::from_str(s.as_str())?;
-            log::debug!("{:?}", field);
-            match field.name.as_str() {
-                "BatteryVoltage" => status.battery_voltage = field.value,
-                "BatteryCurrent" => status.battery_current = field.value,
-                "BatteryTemperature" => status.battery_temperature = field.value,
-                "ExternalVoltage" => status.external_voltage = field.value,
-                "AccelerometerX" => status.accelerometer_x = field.value,
-                "AccelerometerY" => status.accelerometer_y = field.value,
-                "AccelerometerZ" => status.accelerometer_z = field.value,
-                "VacuumCurrent" => status.vacuum_current = field.value,
-                "SideBrushCurrent" => status.side_brush_current = field.value,
-                "MagSensorLeft" => status.mag_sensor_left = field.value,
-                "MagSensorRight" => status.mag_sensor_right = field.value,
-                "WallSensor" => status.wall_sensor = field.value,
-                "DropSensorLeft" => status.drop_sensor_left = field.value,
-                "DropSensorRight" => status.drop_sensor_right = field.value,
-                _ => log::error!("Unrecognized field: {:?}", field),
-            }
-        }
+        let lines = self.read_lines(14)?;
+        log::debug!("Got {} lines", lines);
+        let status = AnalogSensorStatus::from_str(&lines)?;
+
         self.analog_sensor_status = status;
         log::debug!("Got analog_sensors");
         Ok(status)
@@ -559,10 +692,6 @@ impl NeatoRobot for DSeries<'_> {
 
         log::debug!("Serial port flushed");
 
-        let mut status = DigitalSensorStatus {
-            ..Default::default()
-        };
-
         log::debug!("Reading values...");
         loop {
             let header = self.read_line()?;
@@ -573,26 +702,8 @@ impl NeatoRobot for DSeries<'_> {
             }
         }
 
-        for _n in 1..10 {
-            // 10 fields
-            let s = self.read_line()?;
-            log::debug!("{}", s);
-            let field = BoolField::from_str(s.as_str())?;
-            log::debug!("{:?}", field);
-            match field.name.as_str() {
-                "SNSR_DC_JACK_IS_IN" => status.sensor_dc_jack_is_in = field.value,
-                "SNSR_DUSTBIN_IS_IN" => status.sensor_dustbin_is_in = field.value,
-                "SNSR_LEFT_WHEEL_EXTENDED" => status.sensor_left_wheel_extended = field.value,
-                "SNSR_RIGHT_WHEEL_EXTENDED" => status.sensor_right_wheel_extended = field.value,
-                "LSIDEBIT" => status.left_sidebit = field.value,
-                "LFRONTBIT" => status.left_frontbit = field.value,
-                "LLDSBIT" => status.left_ldsbit = field.value,
-                "RSIDEBIT" => status.right_sidebit = field.value,
-                "RFRONTBIT" => status.right_frontbit = field.value,
-                "RLDSBIT" => status.right_ldsbit = field.value,
-                _ => log::error!("Unrecognized field: {:?}", field),
-            }
-        }
+        let lines = self.read_lines(10)?;
+        let status = DigitalSensorStatus::from_str(&lines)?;
         self.digital_sensor_status = status;
         log::debug!("Got digital_sensors");
         Ok(status)
@@ -612,10 +723,6 @@ impl NeatoRobot for DSeries<'_> {
 
         log::debug!("Serial port flushed");
 
-        let mut status = ChargerStatus {
-            ..Default::default()
-        };
-
         log::debug!("Reading values...");
         loop {
             let header = self.read_line()?;
@@ -626,40 +733,8 @@ impl NeatoRobot for DSeries<'_> {
             }
         }
 
-        for _n in 1..15 {
-            // 15 fields
-            let s = self.read_line()?;
-            log::debug!("{}", s);
-            let _ = match IntField::from_str(s.as_str()) {
-                Ok(field) => {
-                    log::debug!("{:?}", field);
-                    match field.name.as_str() {
-                        "FuelPercent" => status.fuel_percent = field.value,
-                        "BatteryOverTemp" => status.battery_over_tmp = field.value,
-                        "ChargingActive" => status.charging_active = field.value,
-                        "ChargingEnabled" => status.charging_enabled = field.value,
-                        "ConfidentOnFuel" => status.confident_on_fuel = field.value,
-                        "OnReservedFuel" => status.on_reserved_fuel = field.value,
-                        "EmptyFuel" => status.empty_fuel = field.value,
-                        "BatteryFailure" => status.battery_failure = field.value,
-                        "ExtPwrPresent" => status.ext_pwr_present = field.value,
-                        "ThermistorPresent" => status.thermistor_present = field.value,
-                        "BattTempCAvg" => status.batt_temp_c_avg = field.value,
-                        "Charger_mAH" => status.charger_mah = field.value,
-                        "Discharge_mAH" => status.discharge_mah = field.value,
-                        _ => log::error!("Unrecognized field: {:?}", field),
-                    }
-                }
-                Err(_parse_int_error) => {
-                    let field = SimpleFloatField::from_str(s.as_str())?;
-                    match field.name.as_str() {
-                        "VBattV" => status.v_batt_v_v = field.value,
-                        "VExtV" => status.v_ext_v = field.value,
-                        _ => log::error!("Unrecognized field: {:?}", field),
-                    }
-                }
-            };
-        };
+        let lines = self.read_lines(16)?;
+        let status = ChargerStatus::from_str(&lines)?;
         self.charger_status = status;
         log::debug!("Got charger");
         Ok(status)
