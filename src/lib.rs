@@ -472,7 +472,7 @@ impl NeatoRobot for DSeries<'_> {
                     v
                 }
                 Err(_) => {
-                    log::debug!("Error reading back");
+                    log::error!("Error reading back");
                     String::new()
                 }
             };
@@ -495,7 +495,7 @@ impl NeatoRobot for DSeries<'_> {
 
         let _s = match self.read_line() {
             Ok(v) => log::debug!("{}", v),
-            Err(_) => log::debug!("Error reading back"),
+            Err(_) => log::error!("Error reading back"),
         };
 
         self.serial_port.flush()?;
@@ -511,7 +511,7 @@ impl NeatoRobot for DSeries<'_> {
 
         let _s = match self.read_line() {
             Ok(v) => log::debug!("{}", v),
-            Err(_) => log::debug!("Error reading back"),
+            Err(_) => log::error!("Error reading back"),
         };
 
         self.serial_port.flush()?;
@@ -604,7 +604,7 @@ impl NeatoRobot for DSeries<'_> {
 
         let _s = match self.read_line() {
             Ok(v) => log::debug!("{}", v),
-            Err(_) => log::debug!("Error reading back"),
+            Err(_) => log::error!("Error reading back"),
         };
 
         self.serial_port.flush()?;
@@ -619,7 +619,7 @@ impl NeatoRobot for DSeries<'_> {
 
         let _s = match self.read_line() {
             Ok(v) => log::debug!("{}", v),
-            Err(_) => log::debug!("Error reading back"),
+            Err(_) => log::error!("Error reading back"),
         };
 
         self.serial_port.flush()?;
@@ -652,7 +652,7 @@ impl NeatoRobot for DSeries<'_> {
 
         let _s = match self.read_line() {
             Ok(v) => log::debug!("{}", v),
-            Err(_) => log::debug!("Error reading back"),
+            Err(_) => log::error!("Error reading back"),
         };
 
         self.serial_port.flush()?;
@@ -685,7 +685,7 @@ impl NeatoRobot for DSeries<'_> {
 
         let _s = match self.read_line() {
             Ok(v) => log::debug!("{}", v),
-            Err(_) => log::debug!("Error reading back"),
+            Err(_) => log::error!("Error reading back"),
         };
 
         self.serial_port.flush()?;
@@ -716,7 +716,7 @@ impl NeatoRobot for DSeries<'_> {
 
         let _s = match self.read_line() {
             Ok(v) => log::debug!("{}", v),
-            Err(_) => log::debug!("Error reading back"),
+            Err(_) => log::error!("Error reading back"),
         };
 
         self.serial_port.flush()?;
