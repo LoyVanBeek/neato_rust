@@ -1,5 +1,5 @@
 use std::{thread, time};
-
+use std::time::Instant;
 use neato_driver::{DSeries, NeatoRobot, Toggle};
 use serialport::SerialPortSettings;
 
@@ -63,43 +63,47 @@ fn main() {
         .set_ldsrotation(Toggle::On)
         .expect("Failed to enable LDS rotation");
 
-    robot.request_scan().expect("Failed to request a scan");
-    // thread::sleep(time::Duration::from_millis(500));
+    loop {
+        let start = Instant::now();
+        robot.request_scan().expect("Failed to request a scan");
+        // thread::sleep(time::Duration::from_millis(500));
 
-    match robot.get_scan_ranges() {
-        Ok(ranges) => println!("{:?}", ranges),
-        Err(err) => {
-            eprintln!("Could not get_scan_ranges: {:?}", err);
-            // robot.exit().expect("Failed to exit robot while handling err");
+        match robot.get_scan_ranges() {
+            Ok(ranges) => println!("{:?}", ranges),
+            Err(err) => {
+                eprintln!("Could not get_scan_ranges: {:?}", err);
+                // robot.exit().expect("Failed to exit robot while handling err");
+            }
         }
+        // thread::sleep(time::Duration::from_secs(5));
+
+        // robot.set_motors(20, 20, 10).expect("Could not set motors");
+        let motor_status = robot.get_motors().expect("Could not get motor data");
+        println!("{:?}", motor_status);
+
+        // let analog_status = robot
+        //     .get_analog_sensors()
+        //     .expect("Could not get analog sensors");
+        // println!("{:?}", analog_status);
+        //
+        // let digital_status = robot
+        //     .get_digital_sensors()
+        //     .expect("Could not get digital sensors");
+        // println!("{:?}", digital_status);
+        //
+        // let charger_status = robot.get_charger().expect("Could not get charger status");
+        // println!("{:?}", charger_status);
+
+        println!("{}", robot);
+
+        // thread::sleep(time::Duration::from_secs(5));
+        // robot
+        //     .set_motors(-20, -20, 10)
+        //     .expect("Could not set motors");
+
+        // robot.set_backlight(Toggle::On).unwrap();
+
+        println!("Loop duration: {:?}", start.elapsed());
     }
-    // thread::sleep(time::Duration::from_secs(5));
-
-    robot.set_motors(20, 20, 10).expect("Could not set motors");
-    let motor_status = robot.get_motors().expect("Could not get motor data");
-    println!("{:?}", motor_status);
-
-    let analog_status = robot
-        .get_analog_sensors()
-        .expect("Could not get analog sensors");
-    println!("{:?}", analog_status);
-
-    let digital_status = robot
-        .get_digital_sensors()
-        .expect("Could not get digital sensors");
-    println!("{:?}", digital_status);
-
-    let charger_status = robot.get_charger().expect("Could not get charger status");
-    println!("{:?}", charger_status);
-
-    println!("{}", robot);
-
-    thread::sleep(time::Duration::from_secs(5));
-    robot
-        .set_motors(-20, -20, 10)
-        .expect("Could not set motors");
-
-    robot.set_backlight(Toggle::On).unwrap();
-
     robot.exit().expect("Failed to exit robot");
 }
